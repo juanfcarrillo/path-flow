@@ -1,0 +1,10 @@
+[workspace]
+members = ["core"]
+
+[package]
+name = "path-flow"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+core = { path = "./core" }
