@@ -87,3 +87,8 @@
 
 **Analytics and Monitoring Hooks**
 - Provides data logging hooks for conversation analysis, NLU performance, and user satisfaction tracking.
+
+
+
+## Mental model
+![Mental Model](images/mental-model.png)
