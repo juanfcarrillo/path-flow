@@ -49,8 +49,8 @@ impl Edge {
         }
     }
 
-    pub fn add_condition(&mut self, condition: impl Condition<NodeContext> + 'static) {
-        self.conditions.push(Box::new(condition));
+    pub fn add_condition(&mut self, condition: impl Condition<NodeContext>) {
+        self.conditions.push(condition.clone_box());
     }
 
     pub fn set_priority(&mut self, priority: i32) {
