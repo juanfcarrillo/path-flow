@@ -56,9 +56,16 @@ impl Node {
     pub fn get_node_context(&self) -> &NodeContext {
         &self.node_context
     }
+
+    pub fn execute_actions(&mut self) -> Result<(), Error> {
+        for action in self.actions.iter() {
+            action.execute(&mut self.node_context)?;
+        }
+        Ok(())
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     String(String),
     Number(f64),
@@ -82,7 +89,7 @@ impl NodeContext {
 }
 
 pub trait Action {
-    fn execute(&self, context: &NodeContext) -> Result<(), Error>;
+    fn execute(&self, context: &mut NodeContext) -> Result<(), Error>;
     fn clone_box(&self) -> Box<dyn Action>;
 }
 
@@ -105,3 +112,107 @@ impl Clone for Box<dyn Action> {
 //     IntegrationNode,
 //     HandoffNode,
 // }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Tests the actions behaviour of the node
+    mod given_certain_actions {
+        use super::*;
+
+        // It represents an action
+        struct TestAction;
+
+        impl TestAction {
+            fn new() -> Self {
+                TestAction
+            }
+        }
+
+        impl Action for TestAction {
+            fn execute(&self, context: &mut NodeContext) -> Result<(), Error> {
+                context.variables.insert("test_var".to_string(), Value::String("test_value".to_string()));
+                Ok(())
+            }
+            fn clone_box(&self) -> Box<dyn Action> {
+                Box::new(TestAction)
+            }
+        }
+
+        struct FailTestAction;
+
+        impl FailTestAction {
+            fn new() -> Self {
+                FailTestAction
+            }
+        }
+
+        impl Action for FailTestAction {
+            fn execute(&self, _context: &mut NodeContext) -> Result<(), Error> {
+                Err(Error)
+            }
+            fn clone_box(&self) -> Box<dyn Action> {
+                Box::new(FailTestAction)
+            }
+        }
+
+
+        #[test]
+        fn test_correctly_executes_the_actions() {
+            let mut node = Node::new(
+                "welcome".to_string(),
+                "message".to_string(),
+                "Welcome".to_string(),
+                "Welcome message".to_string()
+            );
+
+            node.add_action(TestAction::new());
+
+            match node.execute_actions() {
+                Ok(_) => {},
+                Err(error) => {
+                    panic!("Error: {:?}", error);
+                }
+            }
+        }
+
+        #[test]
+        fn test_fails_executing_the_actions() {
+            let mut node = Node::new(
+                "welcome".to_string(),
+                "message".to_string(),
+                "Welcome".to_string(),
+                "Welcome message".to_string()
+            );
+
+            node.add_action(TestAction::new());
+            node.add_action(FailTestAction::new());
+
+            match node.execute_actions() {
+                Ok(_) => {
+                    panic!("Expected an error");
+                },
+                Err(error) => {
+                    assert_eq!(error, Error);
+                }
+            }
+        }
+
+        #[test]
+        fn test_correctly_modifies_the_node_context() {
+            let mut node = Node::new(
+                "welcome".to_string(),
+                "message".to_string(),
+                "Welcome".to_string(),
+                "Welcome message".to_string()
+            );
+            node.add_action(TestAction::new());
+
+            node.execute_actions().unwrap();
+
+            let test_var = node.get_var_context("test_var".to_string());
+            assert_eq!(test_var.unwrap(), Value::String("test_value".to_string()));
+        }
+    }
+}
