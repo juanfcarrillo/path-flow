@@ -91,4 +91,4 @@
 
 
 ## Mental model
-![Mental Model](images/mental-model.png)
+![Mental Model](images/mental_model.png)
