@@ -9,8 +9,6 @@ pub struct Node {
     pub name: String,
     pub description: String,
     node_context: NodeContext,
-    inputs: HashMap<String, String>,  // Key: input name, Value: input type
-    outputs: HashMap<String, String>, // Key: output name, Value: output type
     actions: Vec<Box<dyn Action>>,           // Actions to perform
 }
 
@@ -27,18 +25,8 @@ impl Node {
             name,
             description,
             node_context: NodeContext::new(),
-            inputs: HashMap::new(),
-            outputs: HashMap::new(),
             actions: Vec::new(),
         }
-    }
-
-    pub fn add_input(&mut self, name: String, input_type: String) {
-        self.inputs.insert(name, input_type);
-    }
-
-    pub fn add_output(&mut self, name: String, output_type: String) {
-        self.outputs.insert(name, output_type);
     }
 
     pub fn add_action(&mut self, action: impl Action + 'static) {
