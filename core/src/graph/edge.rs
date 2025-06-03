@@ -1,13 +1,10 @@
 use std::fmt;
-use std::collections::HashMap;
 
 use super::node::NodeContext;
 
 // Trait for condition evaluation
 pub trait Condition<Context> {
     fn evaluate(&self, context: &Context) -> bool;
-    fn get_metadata(&self) -> &HashMap<String, String>;
-    fn get_metadata_mut(&mut self) -> &mut HashMap<String, String>;
     fn clone_box(&self) -> Box<dyn Condition<Context>>;
 }
 
@@ -30,7 +27,6 @@ pub struct Edge {
     pub target_node_id: String,
     pub priority: i32,
     conditions: Vec<Box<dyn Condition<NodeContext>>>,
-    metadata: HashMap<String, String>,
 }
 
 impl Edge {
@@ -45,7 +41,6 @@ impl Edge {
             target_node_id,
             conditions: Vec::new(),
             priority: 0,
-            metadata: HashMap::new(),
         }
     }
 
@@ -67,18 +62,59 @@ impl Edge {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_edge() {
-        let edge = Edge::new(
-            "welcome_to_help".to_string(),
-            "welcome".to_string(),
-            "help".to_string(),
-        );
+    mod given_some_conditions {
+        use super::*;
 
-        assert_eq!(edge.id, "welcome_to_help");
-        assert_eq!(edge.source_node_id, "welcome");
-        assert_eq!(edge.target_node_id, "help");
-        assert_eq!(edge.priority, 0);
-        assert_eq!(edge.conditions.len(), 0);
+        struct PositiveCondition;
+
+        impl Condition<NodeContext> for PositiveCondition {
+            fn evaluate(&self, _context: &NodeContext) -> bool {
+                true
+            }
+            fn clone_box(&self) -> Box<dyn Condition<NodeContext>> {
+                Box::new(PositiveCondition)
+            }
+        }
+
+        struct NegativeCondition;
+
+        impl Condition<NodeContext> for NegativeCondition {
+            fn evaluate(&self, _context: &NodeContext) -> bool {
+                false
+            }
+            fn clone_box(&self) -> Box<dyn Condition<NodeContext>> {
+                Box::new(NegativeCondition)
+            }
+        }
+
+        #[test]
+        fn test_positive_condition() {
+            let condition = PositiveCondition;
+            let mut edge = Edge::new(
+                "welcome_to_help".to_string(),
+                "welcome".to_string(),
+                "help".to_string(),
+            );
+
+            edge.add_condition(condition);
+
+            assert_eq!(edge.conditions.len(), 1);
+            assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()), true); 
+        }
+
+        #[test]
+        fn test_negative_condition() {
+            let condition = NegativeCondition;
+            let mut edge = Edge::new(
+                "welcome_to_help".to_string(),
+                "welcome".to_string(),
+                "help".to_string(),
+            );
+
+            edge.add_condition(condition);
+
+            assert_eq!(edge.conditions.len(), 1);
+            assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()), false); 
+        }
     }
 }
