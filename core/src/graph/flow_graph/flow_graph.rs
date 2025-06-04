@@ -1,6 +1,6 @@
 use std::collections::{HashMap};
 
-use super::{edge::edge::Edge, node::{Node, NodeContext}};
+use crate::graph::{edge::edge::Edge, node::{node::Node, node_context::NodeContext}};
 
 #[derive(Debug)]
 pub struct FlowGraph {
@@ -173,7 +173,7 @@ mod tests {
 
 
     mod given_some_conditions {
-        use crate::graph::edge::{self, tests::condition_implementation::{NegativeCondition, PositiveCondition}};
+        use crate::graph::edge::{self, condition::Condition, tests::condition_implementation::{NegativeCondition, PositiveCondition}};
 
         use super::*;
 
@@ -204,7 +204,7 @@ mod tests {
                 "node2".to_string(),
             );
 
-            edge1.add_condition(PositiveCondition);
+            edge1.add_condition(PositiveCondition.clone_box());
             graph.add_edge(edge1).unwrap();
 
             // Test with valid context
@@ -246,14 +246,14 @@ mod tests {
                 "node1".to_string(),
                 "node2".to_string(),
             );
-            edge1.add_condition(NegativeCondition);
+            edge1.add_condition(NegativeCondition.clone_box());
 
             let mut edge2 = Edge::new(
                 "edge3".to_string(),
                 "node1".to_string(),
                 "node3".to_string(),
             );
-            edge2.add_condition(PositiveCondition);
+            edge2.add_condition(PositiveCondition.clone_box());
 
             graph.add_edge(edge1).unwrap();
             graph.add_edge(edge2).unwrap();
