@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::graph::node::NodeContext;
+use crate::graph::node::node_context::NodeContext;
 
 // Trait for condition evaluation
 pub trait Condition<Context> {

@@ -1,6 +1,6 @@
-use crate::graph::node::NodeContext;
+use crate::graph::node::node_context::NodeContext;
 
-use super::condition::Condition;
+use super::{condition::Condition, edge_builder::EdgeBuilder};
 
 #[derive(Debug, Clone)]
 pub struct Edge {
@@ -24,7 +24,11 @@ impl Edge {
         }
     }
 
-    pub fn add_condition(&mut self, condition: impl Condition<NodeContext>) {
+    pub fn builder(id: String, source_node_id: String, target_node_id: String) -> EdgeBuilder {
+        EdgeBuilder::new(id, source_node_id, target_node_id)
+    }
+
+    pub fn add_condition(&mut self, condition: Box<dyn Condition<NodeContext>>) {
         self.conditions.push(condition.clone_box());
     }
 
@@ -52,7 +56,7 @@ mod tests {
                 "help".to_string(),
             );
 
-            edge.add_condition(condition);
+            edge.add_condition(condition.clone_box());
 
             assert_eq!(edge.conditions.len(), 1);
             assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()), true); 
@@ -67,7 +71,7 @@ mod tests {
                 "help".to_string(),
             );
 
-            edge.add_condition(condition);
+            edge.add_condition(condition.clone_box());
 
             assert_eq!(edge.conditions.len(), 1);
             assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()), false); 
