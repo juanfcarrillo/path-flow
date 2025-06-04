@@ -1,6 +1,6 @@
 use std::collections::{HashMap};
 
-use super::{edge::Edge, node::{Node, NodeContext}};
+use super::{edge::edge::Edge, node::{Node, NodeContext}};
 
 #[derive(Debug)]
 pub struct FlowGraph {
@@ -65,17 +65,17 @@ impl FlowGraph {
         let edge_ids = self.adjacency_list.get(current_node_id)?;
         
         // Get all valid edges sorted by priority
-        let mut valid_edges: Vec<_> = edge_ids
+        let valid_edges: Vec<_> = edge_ids
             .iter()
             .filter_map(|edge_id| self.edges.get(edge_id))
             .filter(|edge| edge.evaluate(context))
             .collect();
 
         // Sort by priority (highest first)
-        valid_edges.sort_by_key(|edge| -edge.priority);
 
-        // Return the target node of the highest priority valid edge
-        valid_edges.first().map(|edge| edge.target_node_id.clone())
+        let edge = valid_edges.get(0)?;
+
+        Some(edge.target_node_id.clone())
     }
 }
 
@@ -87,4 +87,181 @@ pub enum FlowError {
     CycleDetected(Vec<String>),
     NoStartNodes,
     UnreachableNodes(Vec<String>),
+}
+
+#[cfg(test)]
+
+mod tests {
+    use super::*;
+
+    mod given_no_edges {
+        use super::*;
+        #[test]
+        fn should_return_none() {
+            let mut graph = FlowGraph::new();
+
+            let node1 = Node::new(
+                "node1".to_string(),
+                "message".to_string(),
+                "Node 1".to_string(),
+                "Node 1 description".to_string(),
+            );
+
+            let node2 = Node::new(
+                "node2".to_string(),
+                "message".to_string(),
+                "Node 2".to_string(),
+                "Node 2 description".to_string(),
+            );
+
+            graph.add_node(node1).unwrap();
+            graph.add_node(node2).unwrap();
+
+            let context = NodeContext::new();
+            assert_eq!(graph.find_next_node("node1", &context), None);
+        }
+    }
+
+    #[test]
+        fn should_determine_next_node_with_priority() {
+            let mut graph = FlowGraph::new();
+
+            let node1 = Node::new(
+                "node1".to_string(),
+                "message".to_string(),
+                "Node 1".to_string(),
+                "Node 1 description".to_string(),
+            );
+
+            let node2 = Node::new(
+                "node2".to_string(),
+                "message".to_string(),
+                "Node 2".to_string(),
+                "Node 2 description".to_string(),
+            );
+
+            let node3 = Node::new(
+                "node3".to_string(),
+                "message".to_string(),
+                "Node 3".to_string(),
+                "Node 3 description".to_string(),
+            );
+
+            graph.add_node(node1).unwrap();
+            graph.add_node(node2).unwrap();
+            graph.add_node(node3).unwrap();
+
+            let edge1 = Edge::new(
+                "edge1".to_string(),
+                "node1".to_string(),
+                "node2".to_string(),
+            );
+            
+            let edge2 = Edge::new(
+                "edge3".to_string(),
+                "node1".to_string(),
+                "node3".to_string(),
+            );
+
+            graph.add_edge(edge1).unwrap();
+            graph.add_edge(edge2).unwrap();
+
+            // Test with valid context
+            let context = NodeContext::new();
+            assert_eq!(graph.find_next_node("node1", &context), Some("node2".to_string()));
+        }
+
+
+    mod given_some_conditions {
+        use crate::graph::edge::{self, tests::condition_implementation::{NegativeCondition, PositiveCondition}};
+
+        use super::*;
+
+        #[test]
+        fn should_determine_next_node_with_positive_condition() {
+            let mut graph = FlowGraph::new();
+
+            let node1 = Node::new(
+                "node1".to_string(),
+                "message".to_string(),
+                "Node 1".to_string(),
+                "Node 1 description".to_string(),
+            );
+
+            let node2 = Node::new(
+                "node2".to_string(),
+                "message".to_string(),
+                "Node 2".to_string(),
+                "Node 2 description".to_string(),
+            );
+
+            graph.add_node(node1).unwrap();
+            graph.add_node(node2).unwrap();
+
+            let mut edge1 = Edge::new(
+                "edge1".to_string(),
+                "node1".to_string(),
+                "node2".to_string(),
+            );
+
+            edge1.add_condition(PositiveCondition);
+            graph.add_edge(edge1).unwrap();
+
+            // Test with valid context
+            let context = NodeContext::new();
+            assert_eq!(graph.find_next_node("node1", &context), Some("node2".to_string()));
+        }
+    
+        #[test]
+        fn should_determine_first_valid_node() {
+            let mut graph = FlowGraph::new();
+
+            let node1 = Node::new(
+                "node1".to_string(),
+                "message".to_string(),
+                "Node 1".to_string(),
+                "Node 1 description".to_string(),
+            );
+
+            let node2 = Node::new(
+                "node2".to_string(),
+                "message".to_string(),
+                "Node 2".to_string(),
+                "Node 2 description".to_string(),
+            );
+
+            let node3 = Node::new(
+                "node3".to_string(),
+                "message".to_string(),
+                "Node 3".to_string(),
+                "Node 3 description".to_string(),
+            );
+
+            graph.add_node(node1).unwrap();
+            graph.add_node(node2).unwrap();
+            graph.add_node(node3).unwrap();
+
+            let mut edge1 = Edge::new(
+                "edge1".to_string(),
+                "node1".to_string(),
+                "node2".to_string(),
+            );
+            edge1.add_condition(NegativeCondition);
+
+            let mut edge2 = Edge::new(
+                "edge3".to_string(),
+                "node1".to_string(),
+                "node3".to_string(),
+            );
+            edge2.add_condition(PositiveCondition);
+
+            graph.add_edge(edge1).unwrap();
+            graph.add_edge(edge2).unwrap();
+
+            // Test with valid context
+            let context = NodeContext::new();
+            assert_eq!(graph.find_next_node("node1", &context), Some("node3".to_string()));
+        }
+    }
+
 }
