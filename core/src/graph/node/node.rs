@@ -1,5 +1,8 @@
 use std::fmt;
-use std::{collections::HashMap, fmt::Error};
+use std::{fmt::Error};
+
+use super::node_builder::NodeBuilder;
+use super::node_context::{NodeContext, Value};
 
 /// Represents a node in the conversation flow
 #[derive(Debug, Clone)]
@@ -29,8 +32,26 @@ impl Node {
         }
     }
 
-    pub fn add_action(&mut self, action: impl Action + 'static) {
-        self.actions.push(Box::new(action));
+    pub fn builder(
+        id: String,
+        node_type: String,
+        name: String,
+        description: String,
+    ) -> NodeBuilder {
+        NodeBuilder::new(
+            id,
+            node_type,
+            name,
+            description,
+        )
+    }
+
+    pub fn set_node_context(&mut self, node_context: NodeContext) {
+        self.node_context = node_context;
+    }
+
+    pub fn add_action(&mut self, action: Box<dyn Action>) {
+        self.actions.push(action);
     }
 
     pub fn set_var_context(&mut self, key: String, value: Value) {
@@ -50,29 +71,6 @@ impl Node {
             action.execute(&mut self.node_context)?;
         }
         Ok(())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-    String(String),
-    Number(f64),
-    Boolean(bool),
-    List(Vec<Value>),
-    Map(HashMap<String, Value>),
-    Null,
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeContext {
-    pub variables: HashMap<String, Value>,
-}
-
-impl NodeContext {
-    pub fn new() -> Self {
-        NodeContext {
-            variables: HashMap::new(),
-        }
     }
 }
 
@@ -155,7 +153,7 @@ mod tests {
                 "Welcome message".to_string()
             );
 
-            node.add_action(TestAction::new());
+            node.add_action(TestAction::new().clone_box());
 
             match node.execute_actions() {
                 Ok(_) => {},
@@ -174,8 +172,8 @@ mod tests {
                 "Welcome message".to_string()
             );
 
-            node.add_action(TestAction::new());
-            node.add_action(FailTestAction::new());
+            node.add_action(TestAction::new().clone_box());
+            node.add_action(FailTestAction::new().clone_box());
 
             match node.execute_actions() {
                 Ok(_) => {
@@ -195,7 +193,7 @@ mod tests {
                 "Welcome".to_string(),
                 "Welcome message".to_string()
             );
-            node.add_action(TestAction::new());
+            node.add_action(TestAction::new().clone_box());
 
             node.execute_actions().unwrap();
 

@@ -1,4 +1,4 @@
-use crate::graph::{edge::condition::Condition, node::NodeContext};
+use crate::graph::{edge::condition::Condition, node::node_context::NodeContext};
 
 pub struct PositiveCondition;
 
