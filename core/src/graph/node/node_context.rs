@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::flow::conversation::Message;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -8,6 +9,7 @@ pub enum Value {
     List(Vec<Value>),
     Map(HashMap<String, Value>),
     Null,
+    Messages(Vec<Message>)
 }
 
 #[derive(Debug, Clone)]

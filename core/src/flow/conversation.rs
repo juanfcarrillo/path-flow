@@ -1,12 +1,15 @@
-use std::fmt::{Result};
+use std::fmt::{Error};
+use std::result::Result;
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum MessageType {
     Text,
     Image,
     Audio,
 }
 
-struct Message {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Message {
     id: String,
     content: MessageType,
     sender: String,
@@ -31,21 +34,25 @@ impl Conversation {
         }
     }
 
-    fn add_message(&mut self, message: Message) {
+    pub fn add_message(&mut self, message: Message) {
         self.history.push(message);
     }
 
-    fn set_current_node_id(&mut self, node_id: String) {
+    pub fn get_messages(&self) -> Vec<Message> {
+        self.history.clone()
+    }
+
+    pub fn set_current_node_id(&mut self, node_id: String) {
         self.current_node_id = node_id;
     }
 
-    fn get_current_node_id(&self) -> String {
+    pub fn get_current_node_id(&self) -> String {
         self.current_node_id.clone()
     }
 }
 
 pub trait ConversationRepository {
-    fn get_conversation(&self, conversation_id: String) -> Option<Conversation>;
-    fn save_conversation(&mut self, conversation: Conversation) -> Result;
-    fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result;
+    fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Error>;
+    fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Error>;
+    fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Error>;
 }
