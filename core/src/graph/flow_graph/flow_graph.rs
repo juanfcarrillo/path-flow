@@ -1,4 +1,5 @@
 use std::collections::{HashMap};
+use std::fmt;
 
 use crate::graph::{edge::edge::Edge, node::{node::Node, node_context::NodeContext}};
 
@@ -17,6 +18,14 @@ impl FlowGraph {
             edges: HashMap::new(),
             adjacency_list: HashMap::new(),
         }
+    }
+
+    pub fn get_node_mut(&mut self, node_id: &str) -> Result<&mut Node, FlowError> {
+        if !self.nodes.contains_key(node_id) {
+            return Err(FlowError::NodeNotFound(node_id.to_string()));
+        }
+
+        Ok(self.nodes.get_mut(node_id).unwrap())
     }
 
     pub fn add_node(&mut self, node: Node) -> Result<(), FlowError> {
@@ -88,6 +97,21 @@ pub enum FlowError {
     NoStartNodes,
     UnreachableNodes(Vec<String>),
 }
+
+impl fmt::Display for FlowError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FlowError::NodeNotFound(node_id) => write!(f, "Node not found: {}", node_id),
+            FlowError::DuplicateNode(node_id) => write!(f, "Duplicate node: {}", node_id),
+            FlowError::DuplicateEdge(edge_id) => write!(f, "Duplicate edge: {}", edge_id),
+            FlowError::CycleDetected(cycle) => write!(f, "Cycle detected: {:?}", cycle),
+            FlowError::NoStartNodes => write!(f, "No start nodes"),
+            FlowError::UnreachableNodes(unreachable_nodes) => write!(f, "Unreachable nodes: {:?}", unreachable_nodes),
+        }
+    }
+}
+
+impl std::error::Error for FlowError {}
 
 #[cfg(test)]
 
