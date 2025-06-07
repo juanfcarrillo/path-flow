@@ -1,10 +1,10 @@
 use std::fmt::{Error};
 
-use crate::graph::{flow_graph::flow_graph::FlowGraph, node::node_context::{NodeContext, Value}};
+use crate::{graph::{flow_graph::flow_graph::FlowGraph, node::node_context::{NodeContext, Value}}};
 
 use super::conversation::{ConversationRepository};
 
-struct FlowManager {
+pub struct FlowManager {
     flow_graph: FlowGraph,
     conversation_repository: Box<dyn ConversationRepository>,
 }
@@ -17,12 +17,12 @@ impl FlowManager {
         }
     }
 
-    pub fn trigger_conversation(&mut self, conversation_id: String) -> Result<NodeContext, Error> {
+    pub fn trigger_conversation(&mut self, conversation_id: String) -> Result<NodeContext, Box<dyn std::error::Error>> {
         let mut conversation = self.conversation_repository.get_conversation(conversation_id.clone())?;
         let current_node_id = conversation.get_current_node_id();
 
         let current_node = self.flow_graph.get_node_mut(&current_node_id)?;
-        
+
         let messages = conversation.get_messages();
 
         current_node.set_var_context("messages".to_string(), Value::Messages(messages)); 
@@ -39,7 +39,7 @@ impl FlowManager {
                 self.conversation_repository.update_conversation(conversation_id, conversation)?;
             },
             None => {
-                return Err(Error);
+                return Err(Box::new(Error));
             },
         }
 

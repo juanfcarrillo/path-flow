@@ -1,6 +1,7 @@
 use std::collections::{HashMap};
 use std::fmt;
 
+use crate::graph::flow_graph::flow_graph_builder::FlowGraphBuilder;
 use crate::graph::{edge::edge::Edge, node::{node::Node, node_context::NodeContext}};
 
 #[derive(Debug)]
@@ -18,6 +19,10 @@ impl FlowGraph {
             edges: HashMap::new(),
             adjacency_list: HashMap::new(),
         }
+    }
+
+    pub fn builder() -> FlowGraphBuilder {
+        FlowGraphBuilder::new()
     }
 
     pub fn get_node_mut(&mut self, node_id: &str) -> Result<&mut Node, FlowError> {

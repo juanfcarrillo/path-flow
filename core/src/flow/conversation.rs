@@ -1,4 +1,3 @@
-use std::fmt::{Error};
 use std::result::Result;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,19 +16,20 @@ pub struct Message {
     timestamp: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Conversation {
-    id: String,
+    pub id: String,
     history: Vec<Message>,
     current_node_id: String,
     timeout: i16,
 }
 
 impl Conversation {
-    fn new(id: String) -> Self {
+    pub fn new(id: String, current_node_id: String) -> Self {
         Conversation {
             id,
             history: Vec::new(),
-            current_node_id: String::new(),
+            current_node_id: current_node_id,
             timeout: 0,
         }
     }
@@ -52,7 +52,7 @@ impl Conversation {
 }
 
 pub trait ConversationRepository {
-    fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Error>;
-    fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Error>;
-    fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Error>;
+    fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Box<dyn std::error::Error>>;
+    fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
+    fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
 }
