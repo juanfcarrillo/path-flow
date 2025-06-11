@@ -62,8 +62,9 @@ impl TestCondition {
     }
 }
 
+#[async_trait]
 impl Condition<NodeContext> for TestCondition {
-    fn evaluate(&self, context: &NodeContext) -> bool {
+    async fn evaluate(&self, context: &NodeContext) -> bool {
         context.variables.get("test_var").is_some()
     }
 
