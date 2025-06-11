@@ -12,6 +12,7 @@ pub struct FlowManager {
 #[derive(Debug)]
 enum FlowManagerError {
     NextNodeNotFound(String),
+    #[allow(dead_code)]
     NodeNotFound(String),
 }
 

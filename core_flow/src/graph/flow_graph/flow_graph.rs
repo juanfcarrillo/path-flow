@@ -202,7 +202,7 @@ mod tests {
 
 
     mod given_some_conditions {
-        use crate::graph::edge::{self, condition::Condition, tests::condition_implementation::{NegativeCondition, PositiveCondition}};
+        use crate::graph::edge::{condition::Condition, tests::condition_implementation::{NegativeCondition, PositiveCondition}};
 
         use super::*;
 
