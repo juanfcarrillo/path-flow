@@ -1,5 +1,8 @@
-use core::{flow::{conversation::{Conversation, ConversationRepository}, flow_manager::FlowManager}, graph::{edge::{condition::Condition, edge::Edge}, flow_graph::{flow_graph::FlowGraph}, node::{node::{Action, Node}, node_context::{NodeContext, Value}}}};
+use core_flow::{flow::{conversation::{Conversation, ConversationRepository}, flow_manager::FlowManager}, graph::{edge::{condition::Condition, edge::Edge}, flow_graph::{flow_graph::FlowGraph}, node::{node::{Action, Node}, node_context::{NodeContext, Value}}}};
 use std::{collections::HashMap, fmt::Error};
+
+use async_trait::async_trait;
+
 
 struct MemoryConversationRepository {
     conversations: HashMap<String, Conversation>,
@@ -40,12 +43,12 @@ impl TestAction {
     }
 }
 
+#[async_trait]
 impl Action for TestAction {
-    fn execute(&self, context: &mut NodeContext) -> Result<(), Error> {
+    async fn execute(&self, context: &mut NodeContext) -> Result<(), Error> {
         context.variables.insert("test_var".to_string(), Value::String("test_value".to_string()));
         Ok(())
-    }   
-
+    }
     fn clone_box(&self) -> Box<dyn Action> {
         Box::new(TestAction)
     }
@@ -69,7 +72,8 @@ impl Condition<NodeContext> for TestCondition {
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut conversation_repository = MemoryConversationRepository::new();
 
     conversation_repository.save_conversation(Conversation::new("conversation_1".to_string(), "first_node".to_string()))?;
@@ -124,7 +128,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
 
-    flow_manager.trigger_conversation("conversation_1".to_string())?;
+    flow_manager.trigger_conversation("conversation_1".to_string()).await?;
     
     Ok(())
 }

@@ -1,4 +1,4 @@
-use std::fmt::{Error};
+use std::{error::Error, fmt::{Display, Formatter}};
 
 use crate::{graph::{flow_graph::flow_graph::FlowGraph, node::node_context::{NodeContext, Value}}};
 
@@ -9,6 +9,23 @@ pub struct FlowManager {
     conversation_repository: Box<dyn ConversationRepository>,
 }
 
+#[derive(Debug)]
+enum FlowManagerError {
+    NextNodeNotFound(String),
+    NodeNotFound(String),
+}
+
+impl Display for FlowManagerError {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            FlowManagerError::NodeNotFound(node_id) => write!(f, "Node not found: {}", node_id),
+            FlowManagerError::NextNodeNotFound(node_id) => write!(f, "Next node not found: {}", node_id),
+        }
+    }
+}
+
+impl Error for FlowManagerError {}
+
 impl FlowManager {
     pub fn new(conversation_repository: Box<dyn ConversationRepository>, flow_graph: FlowGraph) -> Self {
         FlowManager {
@@ -17,7 +34,7 @@ impl FlowManager {
         }
     }
 
-    pub fn trigger_conversation(&mut self, conversation_id: String) -> Result<NodeContext, Box<dyn std::error::Error>> {
+    pub async fn trigger_conversation(&mut self, conversation_id: String) -> Result<NodeContext, Box<dyn std::error::Error>> {
         let mut conversation = self.conversation_repository.get_conversation(conversation_id.clone())?;
         let current_node_id = conversation.get_current_node_id();
 
@@ -27,7 +44,7 @@ impl FlowManager {
 
         current_node.set_var_context("messages".to_string(), Value::Messages(messages)); 
 
-        current_node.execute_actions()?;
+        current_node.execute_actions().await?;
 
         let final_node_context = current_node.get_node_context().clone();
 
@@ -39,7 +56,7 @@ impl FlowManager {
                 self.conversation_repository.update_conversation(conversation_id, conversation)?;
             },
             None => {
-                return Err(Box::new(Error));
+                return Err(Box::new(FlowManagerError::NextNodeNotFound(current_node_id)));
             },
         }
 

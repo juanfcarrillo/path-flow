@@ -46,6 +46,8 @@ impl NodeBuilder {
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+
     use super::*;
 
     // Test action implementation
@@ -57,8 +59,9 @@ mod tests {
         }
     }
 
+    #[async_trait]
     impl Action for TestAction {
-        fn execute(&self, context: &mut NodeContext) -> Result<(), std::fmt::Error> {
+        async fn execute(&self, context: &mut NodeContext) -> Result<(), std::fmt::Error> {
             context.variables.insert("test_var".to_string(), Value::String("test_value".to_string()));
             Ok(())
         }
@@ -83,8 +86,8 @@ mod tests {
         assert_eq!(node.description, "Test Description");
     }
 
-    #[test]
-    fn test_builder_adds_action() {
+    #[tokio::test]
+    async fn test_builder_adds_action() {
         let mut node = NodeBuilder::new(
             "test_id".to_string(),
             "test_type".to_string(),
@@ -95,7 +98,7 @@ mod tests {
         .build();
 
         // Execute actions to verify the action was added
-        node.execute_actions().unwrap();
+        node.execute_actions().await.unwrap();
         assert_eq!(
             node.get_var_context("test_var".to_string()),
             Some(Value::String("test_value".to_string()))
@@ -120,8 +123,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_builder_chain_methods() {
+    #[tokio::test]
+   async fn test_builder_chain_methods() {
         let test_value = Value::String("context_value".to_string());
         let mut node= NodeBuilder::new(
             "test_id".to_string(),
@@ -140,7 +143,7 @@ mod tests {
         );
 
         // Verify action was added
-        node.execute_actions().unwrap();
+        node.execute_actions().await.unwrap();
         assert_eq!(
             node.get_var_context("test_var".to_string()),
             Some(Value::String("test_value".to_string()))

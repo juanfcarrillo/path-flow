@@ -1,5 +1,7 @@
-use std::fmt;
+use std::fmt::Debug;
 use std::{fmt::Error};
+
+use async_trait::async_trait;
 
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
@@ -66,22 +68,23 @@ impl Node {
         &self.node_context
     }
 
-    pub fn execute_actions(&mut self) -> Result<(), Error> {
+    pub async fn execute_actions(&mut self) -> Result<(), Error> {
         for action in self.actions.iter() {
-            action.execute(&mut self.node_context)?;
+            action.execute(&mut self.node_context).await?;
         }
         Ok(())
     }
 }
 
+#[async_trait]
 pub trait Action {
-    fn execute(&self, context: &mut NodeContext) -> Result<(), Error>;
+    async fn execute(&self, context: &mut NodeContext) -> Result<(), Error>;
     fn clone_box(&self) -> Box<dyn Action>;
 }
 
-impl fmt::Debug for Box<dyn Action> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Debug")
+impl Debug for dyn Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Action")
     }
 }
 
@@ -116,8 +119,9 @@ mod tests {
             }
         }
 
+        #[async_trait]
         impl Action for TestAction {
-            fn execute(&self, context: &mut NodeContext) -> Result<(), Error> {
+            async fn execute(&self, context: &mut NodeContext) -> Result<(), Error> {
                 context.variables.insert("test_var".to_string(), Value::String("test_value".to_string()));
                 Ok(())
             }
@@ -134,8 +138,9 @@ mod tests {
             }
         }
 
+        #[async_trait]
         impl Action for FailTestAction {
-            fn execute(&self, _context: &mut NodeContext) -> Result<(), Error> {
+            async fn execute(&self, _context: &mut NodeContext) -> Result<(), Error> {
                 Err(Error)
             }
             fn clone_box(&self) -> Box<dyn Action> {
@@ -144,8 +149,8 @@ mod tests {
         }
 
 
-        #[test]
-        fn test_correctly_executes_the_actions() {
+        #[tokio::test]
+        async fn test_correctly_executes_the_actions() {
             let mut node = Node::new(
                 "welcome".to_string(),
                 "message".to_string(),
@@ -155,16 +160,19 @@ mod tests {
 
             node.add_action(TestAction::new().clone_box());
 
-            match node.execute_actions() {
-                Ok(_) => {},
-                Err(error) => {
-                    panic!("Error: {:?}", error);
-                }
-            }
+            node.execute_actions().await.unwrap();
+
+
+            // match node.execute_actions() {
+            //     Ok(_) => {},
+            //     Err(error) => {
+            //         panic!("Error: {:?}", error);
+            //     }
+            // }
         }
 
-        #[test]
-        fn test_fails_executing_the_actions() {
+        #[tokio::test]
+        async fn test_fails_executing_the_actions() {
             let mut node = Node::new(
                 "welcome".to_string(),
                 "message".to_string(),
@@ -175,7 +183,7 @@ mod tests {
             node.add_action(TestAction::new().clone_box());
             node.add_action(FailTestAction::new().clone_box());
 
-            match node.execute_actions() {
+            match node.execute_actions().await {
                 Ok(_) => {
                     panic!("Expected an error");
                 },
@@ -185,8 +193,8 @@ mod tests {
             }
         }
 
-        #[test]
-        fn test_correctly_modifies_the_node_context() {
+        #[tokio::test]
+        async fn test_correctly_modifies_the_node_context() {
             let mut node = Node::new(
                 "welcome".to_string(),
                 "message".to_string(),
@@ -195,7 +203,7 @@ mod tests {
             );
             node.add_action(TestAction::new().clone_box());
 
-            node.execute_actions().unwrap();
+            node.execute_actions().await.unwrap();
 
             let test_var = node.get_var_context("test_var".to_string());
             assert_eq!(test_var.unwrap(), Value::String("test_value".to_string()));
