@@ -1,10 +1,13 @@
 use std::fmt;
 
+use async_trait::async_trait;
+
 use crate::graph::node::node_context::NodeContext;
 
 // Trait for condition evaluation
+#[async_trait]
 pub trait Condition<Context> {
-    fn evaluate(&self, context: &Context) -> bool;
+    async fn evaluate(&self, context: &Context) -> bool;
     fn clone_box(&self) -> Box<dyn Condition<Context>>;
 }
 

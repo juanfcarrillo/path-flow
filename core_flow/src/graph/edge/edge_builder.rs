@@ -40,6 +40,8 @@ impl EdgeBuilder {
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+
     use super::*;
 
     // Test condition implementation
@@ -53,8 +55,9 @@ mod tests {
         }
     }
 
+    #[async_trait]
     impl Condition<NodeContext> for TestCondition {
-        fn evaluate(&self, _context: &NodeContext) -> bool {
+        async fn evaluate(&self, _context: &NodeContext) -> bool {
             self.result
         }
 
@@ -76,8 +79,8 @@ mod tests {
         assert_eq!(edge.target_node_id, "target_id");
     }
 
-    #[test]
-    fn test_builder_adds_condition() {
+    #[tokio::test]
+    async fn test_builder_adds_condition() {
         let edge = EdgeBuilder::new(
             "test_id".to_string(),
             "source_id".to_string(),
@@ -86,11 +89,11 @@ mod tests {
         .with_condition(TestCondition::new(true))
         .build();
 
-        assert!(edge.evaluate(&NodeContext::new()));
+        assert!(edge.evaluate(&NodeContext::new()).await);
     }
 
-    #[test]
-    fn test_builder_adds_multiple_conditions() {
+    #[tokio::test]
+    async fn test_builder_adds_multiple_conditions() {
         let edge = EdgeBuilder::new(
             "test_id".to_string(),
             "source_id".to_string(),
@@ -100,7 +103,7 @@ mod tests {
         .with_condition(TestCondition::new(true))
         .build();
 
-        assert!(edge.evaluate(&NodeContext::new()));
+        assert!(edge.evaluate(&NodeContext::new()).await);
 
         let edge_with_false = EdgeBuilder::new(
             "test_id".to_string(),
@@ -111,6 +114,6 @@ mod tests {
         .with_condition(TestCondition::new(false))
         .build();
 
-        assert!(!edge_with_false.evaluate(&NodeContext::new()));
+        assert!(!edge_with_false.evaluate(&NodeContext::new()).await);
     }
 }

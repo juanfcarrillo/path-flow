@@ -49,7 +49,7 @@ impl FlowManager {
 
         let final_node_context = current_node.get_node_context().clone();
 
-        let new_current_node_id = self.flow_graph.find_next_node(&current_node_id, &final_node_context);
+        let new_current_node_id = self.flow_graph.find_next_node(&current_node_id, &final_node_context).await;
 
         match new_current_node_id {
             Some(node_id) => {

@@ -1,4 +1,4 @@
-use crate::graph::node::node_context::NodeContext;
+use crate::graph::{node::node_context::NodeContext};
 
 use super::{condition::Condition, edge_builder::EdgeBuilder};
 
@@ -32,8 +32,13 @@ impl Edge {
         self.conditions.push(condition.clone_box());
     }
 
-    pub fn evaluate(&self, context: &NodeContext) -> bool {
-        self.conditions.iter().all(|condition| condition.evaluate(context))
+    pub async fn evaluate(&self, context: &NodeContext) -> bool {
+        for condition in &self.conditions {
+            if !condition.evaluate(context).await {
+                return false;
+            }
+        }
+        true
     }
 }
 
@@ -47,8 +52,8 @@ mod tests {
 
         use super::*;
 
-        #[test]
-        fn test_positive_condition() {
+        #[tokio::test]
+        async fn test_positive_condition() {
             let condition = PositiveCondition;
             let mut edge = Edge::new(
                 "welcome_to_help".to_string(),
@@ -59,11 +64,11 @@ mod tests {
             edge.add_condition(condition.clone_box());
 
             assert_eq!(edge.conditions.len(), 1);
-            assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()), true); 
+            assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()).await, true); 
         }
 
-        #[test]
-        fn test_negative_condition() {
+        #[tokio::test]
+        async fn test_negative_condition() {
             let condition = NegativeCondition;
             let mut edge = Edge::new(
                 "welcome_to_help".to_string(),
@@ -74,7 +79,7 @@ mod tests {
             edge.add_condition(condition.clone_box());
 
             assert_eq!(edge.conditions.len(), 1);
-            assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()), false); 
+            assert_eq!(edge.conditions[0].evaluate(&NodeContext::new()).await, false); 
         }
     }
 }

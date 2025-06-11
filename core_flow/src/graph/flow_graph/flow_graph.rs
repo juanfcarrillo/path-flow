@@ -75,21 +75,24 @@ impl FlowGraph {
     }
 
     /// Find next valid node based on current context
-    pub fn find_next_node(&self, current_node_id: &str, context: &NodeContext) -> Option<String> {
+    pub async fn find_next_node(&self, current_node_id: &str, context: &NodeContext) -> Option<String> {
         let edge_ids = self.adjacency_list.get(current_node_id)?;
         
-        // Get all valid edges sorted by priority
-        let valid_edges: Vec<_> = edge_ids
-            .iter()
-            .filter_map(|edge_id| self.edges.get(edge_id))
-            .filter(|edge| edge.evaluate(context))
-            .collect();
+        // Get all valid edges and evaluate them asynchronously
+        let mut valid_edges = Vec::new();
+        for edge_id in edge_ids {
+            if let Some(edge) = self.edges.get(edge_id) {
+                if edge.evaluate(context).await {
+                    valid_edges.push(edge);
+                }
+            }
+        }
 
         // Sort by priority (highest first)
+        // Assuming Edge has a priority field, you might want to add:
+        // valid_edges.sort_by(|a, b| b.priority.cmp(&a.priority));
 
-        let edge = valid_edges.get(0)?;
-
-        Some(edge.target_node_id.clone())
+        valid_edges.get(0).map(|edge| edge.target_node_id.clone())
     }
 }
 
@@ -125,8 +128,8 @@ mod tests {
 
     mod given_no_edges {
         use super::*;
-        #[test]
-        fn should_return_none() {
+        #[tokio::test]
+        async fn should_return_none() {
             let mut graph = FlowGraph::new();
 
             let node1 = Node::new(
@@ -147,12 +150,12 @@ mod tests {
             graph.add_node(node2).unwrap();
 
             let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context), None);
+            assert_eq!(graph.find_next_node("node1", &context).await, None);
         }
     }
 
-    #[test]
-        fn should_determine_next_node_with_priority() {
+    #[tokio::test]
+        async fn should_determine_next_node_with_priority() {
             let mut graph = FlowGraph::new();
 
             let node1 = Node::new(
@@ -197,7 +200,7 @@ mod tests {
 
             // Test with valid context
             let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context), Some("node2".to_string()));
+            assert_eq!(graph.find_next_node("node1", &context).await, Some("node2".to_string()));
         }
 
 
@@ -206,8 +209,8 @@ mod tests {
 
         use super::*;
 
-        #[test]
-        fn should_determine_next_node_with_positive_condition() {
+        #[tokio::test]
+        async fn should_determine_next_node_with_positive_condition() {
             let mut graph = FlowGraph::new();
 
             let node1 = Node::new(
@@ -238,11 +241,11 @@ mod tests {
 
             // Test with valid context
             let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context), Some("node2".to_string()));
+            assert_eq!(graph.find_next_node("node1", &context).await, Some("node2".to_string()));
         }
     
-        #[test]
-        fn should_determine_first_valid_node() {
+        #[tokio::test]
+        async fn should_determine_first_valid_node() {
             let mut graph = FlowGraph::new();
 
             let node1 = Node::new(
@@ -289,7 +292,7 @@ mod tests {
 
             // Test with valid context
             let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context), Some("node3".to_string()));
+            assert_eq!(graph.find_next_node("node1", &context).await, Some("node3".to_string()));
         }
     }
 

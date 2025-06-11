@@ -46,6 +46,8 @@ impl FlowGraphBuilder {
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+
     use super::*;
     use crate::graph::{
         edge::condition::Condition,
@@ -63,8 +65,9 @@ mod tests {
         }
     }
 
+    #[async_trait]
     impl Condition<NodeContext> for TestCondition {
-        fn evaluate(&self, _context: &NodeContext) -> bool {
+        async fn evaluate(&self, _context: &NodeContext) -> bool {
             self.result
         }
 
@@ -73,14 +76,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_build_empty_graph() {
+    #[tokio::test]
+    async fn test_build_empty_graph() {
         let graph = FlowGraphBuilder::new().build().unwrap();
-        assert!(graph.find_next_node("non_existent", &NodeContext::new()).is_none());
+        assert!(graph.find_next_node("non_existent", &NodeContext::new()).await.is_none());
     }
 
-    #[test]
-    fn test_build_graph_with_nodes() {
+    #[tokio::test]
+    async fn test_build_graph_with_nodes() {
         let node1 = Node::new(
             "node1".to_string(),
             "message".to_string(),
@@ -101,11 +104,11 @@ mod tests {
             .build()
             .unwrap();
 
-        assert!(graph.find_next_node("node1", &NodeContext::new()).is_none());
+        assert!(graph.find_next_node("node1", &NodeContext::new()).await.is_none());
     }
 
-    #[test]
-    fn test_build_graph_with_nodes_and_edges() {
+    #[tokio::test]
+    async fn test_build_graph_with_nodes_and_edges() {
         let node1 = Node::new(
             "node1".to_string(),
             "message".to_string(),
@@ -135,7 +138,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            graph.find_next_node("node1", &NodeContext::new()),
+            graph.find_next_node("node1", &NodeContext::new()).await,
             Some("node2".to_string())
         );
     }
