@@ -172,7 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
 
-    let context1 = flow_manager
+    flow_manager
         .trigger_conversation(
             "conversation_1".to_string(),
             Message::new(
