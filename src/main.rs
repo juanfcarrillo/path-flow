@@ -3,19 +3,10 @@ use core_flow::{
         conversation::{Conversation, ConversationRepository, Message},
         flow_manager::FlowManager,
     },
-    graph::{
-        edge::{condition::Condition, edge::Edge},
-        flow_graph::flow_graph::FlowGraph,
-        node::{
-            node::{Action, Node},
-            node_context::{NodeContext, Value},
-        },
-    },
+    graph::{edge::edge::Edge, flow_graph::flow_graph::FlowGraph, node::node::Node},
 };
 use implementations::ai_action::ai_action::AIAction;
 use std::collections::HashMap;
-
-use async_trait::async_trait;
 
 struct MemoryConversationRepository {
     conversations: HashMap<String, Conversation>,
@@ -62,47 +53,6 @@ impl ConversationRepository for MemoryConversationRepository {
     }
 }
 
-struct TestAction;
-
-impl TestAction {
-    pub fn new() -> Self {
-        TestAction
-    }
-}
-
-#[async_trait]
-impl Action for TestAction {
-    async fn execute(&self, context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>> {
-        context.variables.insert(
-            "test_var".to_string(),
-            Value::String("test_value".to_string()),
-        );
-        Ok(context.clone())
-    }
-    fn clone_box(&self) -> Box<dyn Action> {
-        Box::new(TestAction)
-    }
-}
-
-struct TestCondition;
-
-impl TestCondition {
-    pub fn new() -> Self {
-        TestCondition
-    }
-}
-
-#[async_trait]
-impl Condition<NodeContext> for TestCondition {
-    async fn evaluate(&self, context: &NodeContext) -> bool {
-        context.variables.get("test_var").is_some()
-    }
-
-    fn clone_box(&self) -> Box<dyn Condition<NodeContext>> {
-        Box::new(TestCondition)
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut conversation_repository = MemoryConversationRepository::new();
@@ -124,9 +74,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "gpt-4o-mini".to_string(),
                 "You are a helpful assistant".to_string(),
             ))
-            .with_action(
-                TestAction::new()
-            )
             .build(),
         )
         .with_node(
@@ -157,7 +104,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "first_node".to_string(),
                 "second_node".to_string(),
             )
-            .with_condition(TestCondition::new())
             .build(),
         )
         .with_edge(
