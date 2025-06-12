@@ -61,9 +61,9 @@ mod tests {
 
     #[async_trait]
     impl Action for TestAction {
-        async fn execute(&self, context: &mut NodeContext) -> Result<(), std::fmt::Error> {
+        async fn execute(&self, context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>> {
             context.variables.insert("test_var".to_string(), Value::String("test_value".to_string()));
-            Ok(())
+            Ok(context.clone())
         }
         
         fn clone_box(&self) -> Box<dyn Action> {

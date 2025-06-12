@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use std::{fmt::Error};
 
 use async_trait::async_trait;
 
@@ -68,17 +67,19 @@ impl Node {
         &self.node_context
     }
 
-    pub async fn execute_actions(&mut self) -> Result<(), Error> {
+    pub async fn execute_actions(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let mut new_context = self.node_context.clone();    
         for action in self.actions.iter() {
-            action.execute(&mut self.node_context).await?;
+            new_context = action.execute(&mut new_context).await?;
         }
+        self.node_context = new_context;
         Ok(())
     }
 }
 
 #[async_trait]
 pub trait Action {
-    async fn execute(&self, context: &mut NodeContext) -> Result<(), Error>;
+    async fn execute(&self, context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>>;
     fn clone_box(&self) -> Box<dyn Action>;
 }
 
@@ -108,6 +109,7 @@ mod tests {
 
     // Tests the actions behaviour of the node
     mod given_certain_actions {
+
         use super::*;
 
         // It represents an action
@@ -121,9 +123,9 @@ mod tests {
 
         #[async_trait]
         impl Action for TestAction {
-            async fn execute(&self, context: &mut NodeContext) -> Result<(), Error> {
+            async fn execute(&self, context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>> {
                 context.variables.insert("test_var".to_string(), Value::String("test_value".to_string()));
-                Ok(())
+                Ok(context.clone())
             }
             fn clone_box(&self) -> Box<dyn Action> {
                 Box::new(TestAction)
@@ -140,8 +142,8 @@ mod tests {
 
         #[async_trait]
         impl Action for FailTestAction {
-            async fn execute(&self, _context: &mut NodeContext) -> Result<(), Error> {
-                Err(Error)
+            async fn execute(&self, _context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>> {
+                Err("Action failed".into())
             }
             fn clone_box(&self) -> Box<dyn Action> {
                 Box::new(FailTestAction)
@@ -188,7 +190,7 @@ mod tests {
                     panic!("Expected an error");
                 },
                 Err(error) => {
-                    assert_eq!(error, Error);
+                    assert_eq!(error.to_string(), "Action failed");
                 }
             }
         }

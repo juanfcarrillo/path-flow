@@ -1,5 +1,5 @@
 [workspace]
-members = ["core_flow"]
+members = ["core_flow", "implementations"]
 
 [package]
 name = "path-flow"
@@ -9,4 +9,5 @@ edition = "2024"
 [dependencies]
 async-trait = "0.1.88"
 core_flow = { path = "./core_flow" }
+implementations = { path = "./implementations" }
 tokio = {version = "1.45.1", features = ["full"]}

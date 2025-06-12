@@ -1,8 +1,11 @@
 use std::result::Result;
 
+use uuid::Uuid;
+use chrono::Utc;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum MessageType {
-    Text,
+    Text(String),
     Image,
     Audio,
 }
@@ -10,10 +13,22 @@ pub enum MessageType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     id: String,
-    content: MessageType,
-    sender: String,
-    recipient: String,
+    pub content: MessageType,
+    pub sender: String,
+    pub recipient: String,
     timestamp: String,
+}
+
+impl Message {
+    pub fn new(sender: String, content: String, recipient: String) -> Self {
+        Message {
+            id: Uuid::new_v4().to_string(),
+            content: MessageType::Text(content),
+            sender,
+            recipient,
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,6 +51,10 @@ impl Conversation {
 
     pub fn add_message(&mut self, message: Message) {
         self.history.push(message);
+    }
+
+    pub fn add_messages(&mut self, messages: Vec<Message>) {
+        self.history.extend(messages);
     }
 
     pub fn get_messages(&self) -> Vec<Message> {

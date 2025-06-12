@@ -1,0 +1,10 @@
+[package]
+name = "implementations"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait = "0.1.88"
+rig-core = "0.13.0"
+core_flow ={ path = "../core_flow" }
+tokio = "1.45.1"
