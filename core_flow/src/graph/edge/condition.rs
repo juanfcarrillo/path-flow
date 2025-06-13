@@ -1,8 +1,9 @@
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 use async_trait::async_trait;
 
 use crate::graph::node::node_context::NodeContext;
+use serde::de::Error as SerdeError;
 
 // Trait for condition evaluation
 #[async_trait]
@@ -20,5 +21,74 @@ impl fmt::Debug for Box<dyn Condition<NodeContext>> {
 impl Clone for Box<dyn Condition<NodeContext>> {
     fn clone(&self) -> Self {
         self.clone_box()
+    }
+}
+
+pub fn deserialize_conditions(
+    json_data: &str,
+    condition_registry: &HashMap<&str, fn() -> Box<dyn Condition<NodeContext>>>,
+) -> Result<Vec<Box<dyn Condition<NodeContext>>>, serde_json::Error> {
+    let conditions_data: Vec<HashMap<String, serde_json::Value>> = serde_json::from_str(json_data)?;
+    let mut conditions: Vec<Box<dyn Condition<NodeContext>>> = Vec::new();
+
+    for condition_data in conditions_data {
+        if let Some(condition_type) = condition_data
+            .get("condition_type")
+            .and_then(|v| v.as_str())
+        {
+            if let Some(condition_constructor) = condition_registry.get(condition_type) {
+                conditions.push(condition_constructor());
+            } else {
+                return Err(SerdeError::custom(format!(
+                    "Unknown condition type: {}",
+                    condition_type
+                )));
+            }
+        }
+    }
+    Ok(conditions)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::graph::edge::tests::condition_implementation::{
+        NegativeCondition, PositiveCondition,
+    };
+
+    use super::*;
+
+    fn create_positive_condition() -> Box<dyn Condition<NodeContext>> {
+        Box::new(PositiveCondition {})
+    }
+
+    fn create_negative_condition() -> Box<dyn Condition<NodeContext>> {
+        Box::new(NegativeCondition {})
+    }
+
+    #[test]
+    fn test_deserialize_conditions() {
+        let json = r#"[
+            {
+                "condition_type": "positive_condition"
+            },
+            {
+                "condition_type": "negative_condition"
+            }
+        ]"#;
+
+        let condition_registry = HashMap::from([
+            (
+                "positive_condition",
+                create_positive_condition as fn() -> Box<dyn Condition<NodeContext>>,
+            ),
+            (
+                "negative_condition",
+                create_negative_condition as fn() -> Box<dyn Condition<NodeContext>>,
+            ),
+        ]);
+
+        let conditions = deserialize_conditions(json, &condition_registry).unwrap();
+
+        assert_eq!(conditions.len(), 2);
     }
 }
