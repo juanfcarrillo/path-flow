@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+
 use crate::flow::conversation::Message;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Value {
     String(String),
     Number(f64),
@@ -12,7 +14,7 @@ pub enum Value {
     Messages(Vec<Message>)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeContext {
     pub variables: HashMap<String, Value>,
 }

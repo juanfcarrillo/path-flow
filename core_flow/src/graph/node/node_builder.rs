@@ -1,4 +1,6 @@
-use super::{node::{Action, Node}, node_context::{NodeContext, Value}};
+use crate::graph::node::action::Action;
+
+use super::{node::{Node}, node_context::{NodeContext, Value}};
 
 pub struct NodeBuilder {
     id: String,

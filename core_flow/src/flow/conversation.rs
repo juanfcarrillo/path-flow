@@ -1,16 +1,17 @@
 use std::result::Result;
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::Utc;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MessageType {
     Text(String),
     Image,
     Audio,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Message {
     id: String,
     pub content: MessageType,

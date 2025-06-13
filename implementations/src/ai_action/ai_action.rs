@@ -2,8 +2,7 @@ use async_trait::async_trait;
 use core_flow::{
     flow::conversation::Message,
     graph::node::{
-        node::Action,
-        node_context::{NodeContext, Value},
+        action::Action, node_context::{NodeContext, Value}
     },
 };
 use rig::{
