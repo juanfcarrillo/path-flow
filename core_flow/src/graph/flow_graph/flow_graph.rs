@@ -1,8 +1,15 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::fmt;
 
+use serde_json::Value;
+
+use crate::graph::edge::condition::Condition;
 use crate::graph::flow_graph::flow_graph_builder::FlowGraphBuilder;
-use crate::graph::{edge::edge::Edge, node::{node::Node, node_context::NodeContext}};
+use crate::graph::node::action::Action;
+use crate::graph::{
+    edge::edge::Edge,
+    node::{node::Node, node_context::NodeContext},
+};
 
 #[derive(Debug)]
 pub struct FlowGraph {
@@ -19,6 +26,71 @@ impl FlowGraph {
             edges: HashMap::new(),
             adjacency_list: HashMap::new(),
         }
+    }
+    // Json Structure
+    // {
+    //     "nodes": [
+    //         {
+    //             "id": "node_id",
+    //             "node_type": "conversational",
+    //             "name": "Node Name",
+    //             "description": "Node Description",
+    //             "node_context": {
+    //                 "variables": {}
+    //             },
+    //             "actions": [
+    //                 {
+    //                     "action_type": "test_action"
+    //                 }
+    //             ]
+    //         }
+    //     ],
+    //     "edges": [
+    //         {
+    //             "id": "edge_id",
+    //             "source_node_id": "node_id",
+    //             "target_node_id": "node_id",
+    //             "conditions": [
+    //                 {
+    //                     "condition_type": "positive_condition"
+    //                 }
+    //             ]
+    //         }
+    //     ]
+    // }
+
+    pub fn from_json(
+        json: &str,
+        action_registry: &HashMap<&str, fn() -> Box<dyn Action>>,
+        condition_registry: &HashMap<&str, fn() -> Box<dyn Condition<NodeContext>>>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let json_map: HashMap<String, serde_json::Value> = serde_json::from_str(json)?;
+
+        let mut graph = FlowGraph::new();
+
+        if let Some(Value::Array(nodes)) = json_map.get("nodes") {
+            let nodes = nodes
+                .iter()
+                .map(|node| Node::from_json(node.to_string().as_str(), action_registry))
+                .collect::<Result<Vec<Node>, serde_json::Error>>()?;
+
+            for node in nodes {
+                graph.add_node(node)?;
+            }
+        }
+
+        if let Some(Value::Array(edges)) = json_map.get("edges") {
+            let edges = edges
+                .iter()
+                .map(|edge| Edge::from_json(edge.to_string().as_str(), condition_registry))
+                .collect::<Result<Vec<Edge>, serde_json::Error>>()?;
+
+            for edge in edges {
+                graph.add_edge(edge)?;
+            }
+        }
+
+        Ok(graph)
     }
 
     pub fn builder() -> FlowGraphBuilder {
@@ -75,9 +147,13 @@ impl FlowGraph {
     }
 
     /// Find next valid node based on current context
-    pub async fn find_next_node(&self, current_node_id: &str, context: &NodeContext) -> Option<String> {
+    pub async fn find_next_node(
+        &self,
+        current_node_id: &str,
+        context: &NodeContext,
+    ) -> Option<String> {
         let edge_ids = self.adjacency_list.get(current_node_id)?;
-        
+
         // Get all valid edges and evaluate them asynchronously
         let mut valid_edges = Vec::new();
         for edge_id in edge_ids {
@@ -114,7 +190,9 @@ impl fmt::Display for FlowError {
             FlowError::DuplicateEdge(edge_id) => write!(f, "Duplicate edge: {}", edge_id),
             FlowError::CycleDetected(cycle) => write!(f, "Cycle detected: {:?}", cycle),
             FlowError::NoStartNodes => write!(f, "No start nodes"),
-            FlowError::UnreachableNodes(unreachable_nodes) => write!(f, "Unreachable nodes: {:?}", unreachable_nodes),
+            FlowError::UnreachableNodes(unreachable_nodes) => {
+                write!(f, "Unreachable nodes: {:?}", unreachable_nodes)
+            }
         }
     }
 }
@@ -155,57 +233,62 @@ mod tests {
     }
 
     #[tokio::test]
-        async fn should_determine_next_node_with_priority() {
-            let mut graph = FlowGraph::new();
+    async fn should_determine_next_node_with_priority() {
+        let mut graph = FlowGraph::new();
 
-            let node1 = Node::new(
-                "node1".to_string(),
-                "message".to_string(),
-                "Node 1".to_string(),
-                "Node 1 description".to_string(),
-            );
+        let node1 = Node::new(
+            "node1".to_string(),
+            "message".to_string(),
+            "Node 1".to_string(),
+            "Node 1 description".to_string(),
+        );
 
-            let node2 = Node::new(
-                "node2".to_string(),
-                "message".to_string(),
-                "Node 2".to_string(),
-                "Node 2 description".to_string(),
-            );
+        let node2 = Node::new(
+            "node2".to_string(),
+            "message".to_string(),
+            "Node 2".to_string(),
+            "Node 2 description".to_string(),
+        );
 
-            let node3 = Node::new(
-                "node3".to_string(),
-                "message".to_string(),
-                "Node 3".to_string(),
-                "Node 3 description".to_string(),
-            );
+        let node3 = Node::new(
+            "node3".to_string(),
+            "message".to_string(),
+            "Node 3".to_string(),
+            "Node 3 description".to_string(),
+        );
 
-            graph.add_node(node1).unwrap();
-            graph.add_node(node2).unwrap();
-            graph.add_node(node3).unwrap();
+        graph.add_node(node1).unwrap();
+        graph.add_node(node2).unwrap();
+        graph.add_node(node3).unwrap();
 
-            let edge1 = Edge::new(
-                "edge1".to_string(),
-                "node1".to_string(),
-                "node2".to_string(),
-            );
-            
-            let edge2 = Edge::new(
-                "edge3".to_string(),
-                "node1".to_string(),
-                "node3".to_string(),
-            );
+        let edge1 = Edge::new(
+            "edge1".to_string(),
+            "node1".to_string(),
+            "node2".to_string(),
+        );
 
-            graph.add_edge(edge1).unwrap();
-            graph.add_edge(edge2).unwrap();
+        let edge2 = Edge::new(
+            "edge3".to_string(),
+            "node1".to_string(),
+            "node3".to_string(),
+        );
 
-            // Test with valid context
-            let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context).await, Some("node2".to_string()));
-        }
+        graph.add_edge(edge1).unwrap();
+        graph.add_edge(edge2).unwrap();
 
+        // Test with valid context
+        let context = NodeContext::new();
+        assert_eq!(
+            graph.find_next_node("node1", &context).await,
+            Some("node2".to_string())
+        );
+    }
 
     mod given_some_conditions {
-        use crate::graph::edge::{condition::Condition, tests::condition_implementation::{NegativeCondition, PositiveCondition}};
+        use crate::graph::edge::{
+            condition::Condition,
+            tests::condition_implementation::{NegativeCondition, PositiveCondition},
+        };
 
         use super::*;
 
@@ -241,9 +324,12 @@ mod tests {
 
             // Test with valid context
             let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context).await, Some("node2".to_string()));
+            assert_eq!(
+                graph.find_next_node("node1", &context).await,
+                Some("node2".to_string())
+            );
         }
-    
+
         #[tokio::test]
         async fn should_determine_first_valid_node() {
             let mut graph = FlowGraph::new();
@@ -292,8 +378,114 @@ mod tests {
 
             // Test with valid context
             let context = NodeContext::new();
-            assert_eq!(graph.find_next_node("node1", &context).await, Some("node3".to_string()));
+            assert_eq!(
+                graph.find_next_node("node1", &context).await,
+                Some("node3".to_string())
+            );
         }
     }
 
+    mod given_json {
+        use async_trait::async_trait;
+
+        use crate::graph::{edge::tests::condition_implementation::{
+            PositiveCondition,
+        }, node::node_context::Value};
+
+        use super::*;
+
+        struct TestAction;
+
+        impl TestAction {
+            fn new() -> Self {
+                TestAction
+            }
+        }
+
+        #[async_trait]
+        impl Action for TestAction {
+            async fn execute(
+                &self,
+                context: &mut NodeContext,
+            ) -> Result<NodeContext, Box<dyn std::error::Error>> {
+                context.variables.insert(
+                    "test_var".to_string(),
+                    Value::String("test_value".to_string()),
+                );
+                Ok(context.clone())
+            }
+            fn clone_box(&self) -> Box<dyn Action> {
+                Box::new(TestAction)
+            }
+        }
+
+        fn create_positive_condition() -> Box<dyn Condition<NodeContext>> {
+            Box::new(PositiveCondition {})
+        }
+
+        fn create_test_action() -> Box<dyn Action> {
+            Box::new(TestAction::new())
+        }
+
+        #[test]
+        fn test_from_json() {
+            let json = r#"{
+                "nodes": [
+                    {
+                        "id": "node1",
+                        "node_type": "conversational",
+                        "name": "Node 1",
+                        "description": "Node 1 description",
+                        "node_context": {
+                            "variables": {}
+                        },
+                        "actions": [
+                            {
+                                "action_type": "test_action"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "node2",
+                        "node_type": "conversational",
+                        "name": "Node 2",
+                        "description": "Node 2 description",
+                        "node_context": {
+                            "variables": {}
+                        },
+                        "actions": [
+                            {
+                                "action_type": "test_action"
+                            }
+                        ]
+                    }
+                ],
+                "edges": [
+                    {
+                        "id": "edge1",
+                        "source_node_id": "node1",
+                        "target_node_id": "node2",
+                        "conditions": [
+                            {
+                                "condition_type": "positive_condition"
+                            }
+                        ]
+                    }
+                ]
+            }"#;
+
+            let action_registry =
+                HashMap::from([("test_action", create_test_action as fn() -> Box<dyn Action>)]);
+
+            let condition_registry = HashMap::from([(
+                "positive_condition",
+                create_positive_condition as fn() -> Box<dyn Condition<NodeContext>>,
+            )]);
+
+            let graph = FlowGraph::from_json(json, &action_registry, &condition_registry).unwrap();
+
+            assert_eq!(graph.nodes.len(), 2);
+            assert_eq!(graph.edges.len(), 1);
+        }
+    }
 }
