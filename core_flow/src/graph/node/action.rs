@@ -94,7 +94,10 @@ mod tests {
     async fn test_deserialize_actions_with_config() {
         let json = r#"[
             {
-                "action_type": "test_action"
+                "action_type": "test_action",
+                "config": {
+                    "test_config": "test_value"
+                }
             }
         ]"#;
 
