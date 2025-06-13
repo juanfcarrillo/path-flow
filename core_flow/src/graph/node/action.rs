@@ -42,7 +42,6 @@ pub fn deserialize_actions(json_data: &str, action_registry: &HashMap<&str, fn()
     Ok(actions)
 }
 
-
 pub fn deserialize_actions_with_config(
     json_data: &str,
     action_registry: &HashMap<&str, fn(&JsonValue) -> Box<dyn Action>>,
@@ -53,8 +52,11 @@ pub fn deserialize_actions_with_config(
     for action_data in actions_data {
         if let Some(action_type) = action_data.get("action_type").and_then(|v| v.as_str()) {
             if let Some(action_constructor) = action_registry.get(action_type) {
-                let config = action_data.get("config").unwrap_or(&JsonValue::Null);
-                actions.push(action_constructor(config));
+                let config = action_data.get("config");
+                if config.is_some() {
+                    actions.push(action_constructor(config.unwrap()));
+                }
+                actions.push(action_constructor(&JsonValue::Null));
             } else {
                 return Err(serde_json::Error::custom(format!(
                     "Unknown action type: {}",
@@ -92,10 +94,7 @@ mod tests {
     async fn test_deserialize_actions_with_config() {
         let json = r#"[
             {
-                "action_type": "test_action",
-                "config": {
-                    "test_config": "test_value"
-                }
+                "action_type": "test_action"
             }
         ]"#;
 
