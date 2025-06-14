@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "action_type": "ai_action",
                             "config": {
                                 "model": "gpt-4o-mini",
-                                "system_prompt": "You are a helpful assistant"
+                                "system_prompt": "Dont answer the question, just reply mheee"
                             }
                         }
                     ]
@@ -103,7 +103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "action_type": "ai_action",
                             "config": {
                                 "model": "gpt-4o-mini",
-                                "system_prompt": "You are a helpful assistant"
+                                "system_prompt": "Dont answer the question, just reply mheee"
                             }
                         }
                     ]
@@ -121,7 +121,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "action_type": "ai_action",
                             "config": {
                                 "model": "gpt-4o-mini",
-                                "system_prompt": "You are a helpful assistant"
+                                "system_prompt": "Dont answer the question, just reply mheee"
                             }
                         }
                     ]
@@ -160,7 +160,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "conversation_1".to_string(),
             Message::new(
                 "juan".to_string(),
-                "Whats the capital of france ?".to_string(),
+                "Whats the capital of Ecuador ?".to_string(),
                 "user".to_string(),
             ),
         )
