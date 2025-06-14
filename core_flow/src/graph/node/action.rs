@@ -1,10 +1,10 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, f32::consts::E, fmt::Debug};
 use serde::de::Error as SerdeError;
 use serde_json::Value as JsonValue;
 
 use async_trait::async_trait;
 
-use crate::graph::node::node_context::NodeContext;
+use crate::graph::node::{action_registry::ActionRegistry, node_context::NodeContext};
 
 
 #[async_trait]
@@ -25,38 +25,22 @@ impl Clone for Box<dyn Action> {
     }
 }
 
-pub fn deserialize_actions(json_data: &str, action_registry: &HashMap<&str, fn() -> Box<dyn Action>>) -> Result<Vec<Box<dyn Action>>, serde_json::Error> {
-    let actions_data: Vec<HashMap<String, serde_json::Value>> = serde_json::from_str(json_data)?;
-    let mut actions: Vec<Box<dyn Action>> = Vec::new();
-
-    for action_data in actions_data {
-        if let Some(action_type) = action_data.get("action_type").and_then(|v| v.as_str()) {
-            if let Some(action_constructor) = action_registry.get(action_type) {
-                actions.push(action_constructor());
-            } else {
-                return Err(SerdeError::custom(format!("Unknown action type: {}", action_type)));
-            }
-        }
-    }
-
-    Ok(actions)
-}
-
 pub fn deserialize_actions_with_config(
     json_data: &str,
-    action_registry: &HashMap<&str, fn(&JsonValue) -> Box<dyn Action>>,
+    action_registry: &ActionRegistry,
 ) -> Result<Vec<Box<dyn Action>>, serde_json::Error> {
     let actions_data: Vec<HashMap<String, JsonValue>> = serde_json::from_str(json_data)?;
     let mut actions: Vec<Box<dyn Action>> = Vec::new();
 
     for action_data in actions_data {
         if let Some(action_type) = action_data.get("action_type").and_then(|v| v.as_str()) {
-            if let Some(action_constructor) = action_registry.get(action_type) {
+            if let Some(action_constructor) = action_registry.get_actions().get(action_type) {
                 let config = action_data.get("config");
                 if config.is_some() {
                     actions.push(action_constructor(config.unwrap()));
+                } else {
+                    actions.push(action_constructor(&JsonValue::Null));
                 }
-                actions.push(action_constructor(&JsonValue::Null));
             } else {
                 return Err(serde_json::Error::custom(format!(
                     "Unknown action type: {}",
@@ -75,21 +59,6 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn test_deserialize_actions() {
-        let json = r#"[
-            {
-                "action_type": "test_action"
-            }
-        ]"#;
-
-        let action_registry = HashMap::from([("test_action", create_test_action as fn() -> Box<dyn Action>)]);
-
-        let actions = deserialize_actions(json, &action_registry).unwrap();
-
-        assert_eq!(actions.len(), 1);
-    }
-
     #[tokio::test]
     async fn test_deserialize_actions_with_config() {
         let json = r#"[
@@ -101,10 +70,11 @@ mod tests {
             }
         ]"#;
 
-        let action_registry = HashMap::from([(
+        let mut action_registry = ActionRegistry::new();
+        action_registry.register_action(
             "test_action",
-            create_test_action_config as fn(&JsonValue) -> Box<dyn Action>,
-        )]);
+            create_test_action_config as fn(&JsonValue) -> Box<dyn Action>
+        );
 
         let actions = deserialize_actions_with_config(json, &action_registry).unwrap();
 
