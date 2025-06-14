@@ -43,6 +43,13 @@ impl AIAction {
 
         Ok(response)
     }
+
+    pub fn create_ai_action(config: &serde_json::Value) -> Box<dyn Action> {
+        Box::new(AIAction::new(
+            config["model"].as_str().unwrap().to_string(),
+            config["system_prompt"].as_str().unwrap().to_string(),
+        ))
+    }
 }
 
 #[async_trait]

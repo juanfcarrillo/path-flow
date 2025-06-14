@@ -3,16 +3,18 @@ use std::fmt;
 
 use serde_json::Value;
 
-use crate::graph::edge::condition::Condition;
+use crate::graph::edge::condition_registry::ConditionRegistry;
 use crate::graph::flow_graph::flow_graph_builder::FlowGraphBuilder;
-use crate::graph::node::action::Action;
+use crate::graph::node::action_registry::{ActionRegistry};
 use crate::graph::{
     edge::edge::Edge,
     node::{node::Node, node_context::NodeContext},
 };
 
+use serde_json::Value as JsonValue;
+
 #[derive(Debug)]
-pub struct FlowGraph {
+pub struct  FlowGraph {
     nodes: HashMap<String, Node>,
     edges: HashMap<String, Edge>,
     // Adjacency list for quick traversal
@@ -61,8 +63,8 @@ impl FlowGraph {
 
     pub fn from_json(
         json: &str,
-        action_registry: &HashMap<&str, fn() -> Box<dyn Action>>,
-        condition_registry: &HashMap<&str, fn() -> Box<dyn Condition<NodeContext>>>,
+        action_registry: &ActionRegistry,
+        condition_registry: &ConditionRegistry,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let json_map: HashMap<String, serde_json::Value> = serde_json::from_str(json)?;
 
@@ -388,9 +390,7 @@ mod tests {
     mod given_json {
         use async_trait::async_trait;
 
-        use crate::graph::{edge::tests::condition_implementation::{
-            PositiveCondition,
-        }, node::node_context::Value};
+        use crate::graph::{edge::{condition::Condition, tests::condition_implementation::PositiveCondition}, node::{action::Action, node_context::Value}};
 
         use super::*;
 
@@ -419,11 +419,11 @@ mod tests {
             }
         }
 
-        fn create_positive_condition() -> Box<dyn Condition<NodeContext>> {
+        fn create_positive_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
             Box::new(PositiveCondition {})
         }
 
-        fn create_test_action() -> Box<dyn Action> {
+        fn create_test_action(_: &JsonValue) -> Box<dyn Action> {
             Box::new(TestAction::new())
         }
 
@@ -474,13 +474,17 @@ mod tests {
                 ]
             }"#;
 
-            let action_registry =
-                HashMap::from([("test_action", create_test_action as fn() -> Box<dyn Action>)]);
+            let mut action_registry = ActionRegistry::new();
+            action_registry.register_action(
+                "test_action",
+                create_test_action as fn(&JsonValue) -> Box<dyn Action>,
+            );
 
-            let condition_registry = HashMap::from([(
+            let mut condition_registry = ConditionRegistry::new();
+            condition_registry.register_condition(
                 "positive_condition",
-                create_positive_condition as fn() -> Box<dyn Condition<NodeContext>>,
-            )]);
+                create_positive_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+            );
 
             let graph = FlowGraph::from_json(json, &action_registry, &condition_registry).unwrap();
 

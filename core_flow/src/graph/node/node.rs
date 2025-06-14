@@ -2,10 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::graph::node::action::{Action, deserialize_actions};
+use crate::graph::node::action::{deserialize_actions_with_config, Action};
+use crate::graph::node::action_registry::ActionRegistry;
 
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
+
+use serde_json::Value as JsonValue;
 
 /// Represents a node in the conversation flow
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -33,15 +36,14 @@ impl Node {
 
     pub fn from_json(
         json: &str,
-        action_registry: &HashMap<&str, fn() -> Box<dyn Action>>,
+        action_registry: &ActionRegistry,
     ) -> Result<Self, serde_json::Error> {
         let mut node: Node = serde_json::from_str(json)?;
-        println!("Actions asdasdas: {:?}", deserialize_actions(json, action_registry));
 
         let json_map: HashMap<String, serde_json::Value> = serde_json::from_str(json)?;
 
         if let Some(actions_value) = json_map.get("actions") {
-            if let Ok(actions) = deserialize_actions(actions_value.to_string().as_str(), action_registry) {
+            if let Ok(actions) = deserialize_actions_with_config(actions_value.to_string().as_str(), action_registry) {
                 node.actions = actions;
             }
         }
@@ -213,7 +215,7 @@ mod tests {
 
         use super::*;
 
-        fn create_test_action() -> Box<dyn Action> {
+        fn create_test_action(_: &JsonValue) -> Box<dyn Action> {
             Box::new(TestAction::new())
         }
 
@@ -234,7 +236,11 @@ mod tests {
                 ]
             }"#;
 
-            let action_registry = HashMap::from([("test_action", create_test_action as fn() -> Box<dyn Action>)]);
+            let mut action_registry = ActionRegistry::new();
+            action_registry.register_action(
+                "test_action",
+                create_test_action as fn(&JsonValue) -> Box<dyn Action>,
+            );
 
             let node = Node::from_json(json, &action_registry).unwrap();
             

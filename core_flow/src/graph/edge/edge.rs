@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::graph::{edge::condition::deserialize_conditions, node::node_context::NodeContext};
+use crate::graph::{edge::{condition::{deserialize_conditions_with_config}, condition_registry::ConditionRegistry}, node::node_context::NodeContext};
 
 use super::{condition::Condition, edge_builder::EdgeBuilder};
 
@@ -31,14 +31,14 @@ impl Edge {
 
     pub fn from_json(
         json: &str,
-        condition_registry: &HashMap<&str, fn() -> Box<dyn Condition<NodeContext>>>,
+        condition_registry: &ConditionRegistry,
     ) -> Result<Self, serde_json::Error> {
         let mut edge: Edge = serde_json::from_str(json)?;
 
         let json_map: HashMap<String, serde_json::Value> = serde_json::from_str(json)?;
 
         if let Some(conditions_value) = json_map.get("conditions") {
-            if let Ok(conditions) = deserialize_conditions(conditions_value.to_string().as_str(), condition_registry) {
+            if let Ok(conditions) = deserialize_conditions_with_config(conditions_value.to_string().as_str(), condition_registry) {
                 edge.conditions = conditions;
             }
         }
@@ -110,11 +110,11 @@ mod tests {
 
         use super::*;
 
-        fn create_positive_condition() -> Box<dyn Condition<NodeContext>> {
+        fn create_positive_condition(_: &serde_json::Value) -> Box<dyn Condition<NodeContext>> {
             Box::new(PositiveCondition {})
         }
 
-        fn create_negative_condition() -> Box<dyn Condition<NodeContext>> {
+        fn create_negative_condition(_: &serde_json::Value) -> Box<dyn Condition<NodeContext>> {
             Box::new(NegativeCondition {})
         }
 
@@ -134,16 +134,15 @@ mod tests {
                 ]
             }"#;
 
-            let condition_registry = HashMap::from([
-                (
-                    "positive_condition",
-                    create_positive_condition as fn() -> Box<dyn Condition<NodeContext>>,
-                ),
-                (
-                    "negative_condition",
-                    create_negative_condition as fn() -> Box<dyn Condition<NodeContext>>,
-                ),
-            ]);
+            let mut condition_registry = ConditionRegistry::new();
+            condition_registry.register_condition(
+                "positive_condition",
+                create_positive_condition as fn(&serde_json::Value) -> Box<dyn Condition<NodeContext>>,
+            );
+            condition_registry.register_condition(
+                "negative_condition",
+                create_negative_condition as fn(&serde_json::Value) -> Box<dyn Condition<NodeContext>>,
+            );
 
             let edge = Edge::from_json(json, &condition_registry).unwrap();
 

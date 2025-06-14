@@ -3,7 +3,7 @@ use core_flow::{
         conversation::{Conversation, ConversationRepository, Message},
         flow_manager::FlowManager,
     },
-    graph::{edge::edge::Edge, flow_graph::flow_graph::FlowGraph, node::node::Node},
+    graph::{edge::{condition_registry::ConditionRegistry}, flow_graph::flow_graph::FlowGraph, node::{action::Action, action_registry::ActionRegistry}},
 };
 use implementations::ai_action::ai_action::AIAction;
 use std::collections::HashMap;
@@ -62,59 +62,96 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "first_node".to_string(),
     ))?;
 
-    let flow_graph = FlowGraph::builder()
-        .with_node(
-            Node::builder(
-                "first_node".to_string(),
-                "conversational".to_string(),
-                "First Node".to_string(),
-                "First Node Description".to_string(),
-            )
-            .with_action(AIAction::new(
-                "gpt-4o-mini".to_string(),
-                "You are a helpful assistant".to_string(),
-            ))
-            .build(),
-        )
-        .with_node(
-            Node::builder(
-                "second_node".to_string(),
-                "conversational".to_string(),
-                "Second Node".to_string(),
-                "Second Node Description".to_string(),
-            )
-            .with_action(AIAction::new(
-                "gpt-4o-mini".to_string(),
-                "You are a helpful assistant".to_string(),
-            ))
-            .build(),
-        )
-        .with_node(
-            Node::builder(
-                "third_node".to_string(),
-                "conversational".to_string(),
-                "Third Node".to_string(),
-                "Third Node Description".to_string(),
-            )
-            .build(),
-        )
-        .with_edge(
-            Edge::builder(
-                "first_node_to_second_node".to_string(),
-                "first_node".to_string(),
-                "second_node".to_string(),
-            )
-            .build(),
-        )
-        .with_edge(
-            Edge::builder(
-                "second_node_to_third_node".to_string(),
-                "second_node".to_string(),
-                "third_node".to_string(),
-            )
-            .build(),
-        )
-        .build()?;
+    let mut action_registry = ActionRegistry::new();
+    action_registry.register_action(
+        "ai_action",
+        AIAction::create_ai_action as fn(&serde_json::Value) -> Box<dyn Action>,
+    );
+    let condition_registry= ConditionRegistry::new();
+
+    let json_graph = r#"
+        {
+            "nodes": [
+                {
+                    "id": "first_node",
+                    "node_type": "conversational",
+                    "name": "First Node",
+                    "description": "First Node Description",
+                    "node_context": {
+                        "variables": {}
+                    },
+                    "actions": [
+                        {
+                            "action_type": "ai_action",
+                            "config": {
+                                "model": "gpt-4o-mini",
+                                "system_prompt": "You are a helpful assistant"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "second_node",
+                    "node_type": "conversational",
+                    "name": "Second Node",
+                    "description": "Second Node Description",
+                    "node_context": {
+                        "variables": {}
+                    },
+                    "actions": [
+                        {
+                            "action_type": "ai_action",
+                            "config": {
+                                "model": "gpt-4o-mini",
+                                "system_prompt": "You are a helpful assistant"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "third_node",
+                    "node_type": "conversational",
+                    "name": "Third Node",
+                    "description": "Third Node Description",
+                    "node_context": {
+                        "variables": {}
+                    },
+                    "actions": [
+                        {
+                            "action_type": "ai_action",
+                            "config": {
+                                "model": "gpt-4o-mini",
+                                "system_prompt": "You are a helpful assistant"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "edges": [
+                {
+                    "id": "first_node_to_second_node",
+                    "source_node_id": "first_node",
+                    "target_node_id": "second_node",
+                    "conditions": [
+                        {
+                            "condition_type": "positive_condition"
+                        }
+                    ]
+                },
+                {
+                    "id": "second_node_to_third_node",
+                    "source_node_id": "second_node",
+                    "target_node_id": "third_node",
+                    "conditions": [
+                        {
+                            "condition_type": "negative_condition"
+                        }
+                    ]
+                }
+            ]
+        }"#;
+
+    let flow_graph = FlowGraph::from_json(json_graph, &action_registry, &condition_registry).unwrap();
 
     let mut flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
 

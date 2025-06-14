@@ -5,7 +5,7 @@ use crate::graph::edge::condition::Condition;
 use crate::graph::node::node_context::NodeContext;
 use serde_json::Value as JsonValue;
 
-struct ConditionRegistry {
+pub struct ConditionRegistry {
     conditions: HashMap<String, fn(&JsonValue) -> Box<dyn Condition<NodeContext>>>,
 }
 

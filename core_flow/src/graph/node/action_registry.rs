@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::graph::node::action::Action;
 
-struct ActionRegistry {
+pub struct ActionRegistry {
     actions: HashMap<String, fn(&JsonValue) -> Box<dyn Action>>,
 }
 

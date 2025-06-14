@@ -662,6 +662,8 @@ dependencies = [
  "async-trait",
  "core_flow",
  "rig-core",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -907,6 +909,8 @@ dependencies = [
  "async-trait",
  "core_flow",
  "implementations",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
