@@ -33,12 +33,12 @@ impl AIAction {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let openai_client = openai::Client::from_env();
 
-        let gpt4 = openai_client.agent(openai::GPT_4O).build();
+        let gpt4 = openai_client.agent(&self.model).build();
 
         let messages = messages.iter().map(|m| rig_message_adapter(m.clone())).collect::<Vec<rig::completion::Message>>();
 
         let response = gpt4
-            .chat("You are a helpful assistant", messages)
+            .chat(&self.system_prompt, messages)
             .await?;
 
         Ok(response)
