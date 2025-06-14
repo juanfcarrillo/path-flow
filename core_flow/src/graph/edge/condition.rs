@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt};
 
+use serde_json::Value as JsonValue;
+
 use async_trait::async_trait;
 
 use crate::graph::node::node_context::NodeContext;
@@ -49,10 +51,37 @@ pub fn deserialize_conditions(
     Ok(conditions)
 }
 
+pub fn deserialize_conditions_with_config(
+    json_data: &str,
+    condition_registry: &HashMap<&str, fn(&JsonValue) -> Box<dyn Condition<NodeContext>>>,
+) -> Result<Vec<Box<dyn Condition<NodeContext>>>, serde_json::Error> {
+    let conditions_data: Vec<HashMap<String, JsonValue>> = serde_json::from_str(json_data)?;
+    let mut conditions: Vec<Box<dyn Condition<NodeContext>>> = Vec::new();
+
+    for condition_data in conditions_data {
+        if let Some(condition_type) = condition_data.get("condition_type").and_then(|v| v.as_str()) {
+            if let Some(condition_constructor) = condition_registry.get(condition_type) {
+                let config = condition_data.get("config");
+                if config.is_some() {
+                    conditions.push(condition_constructor(config.unwrap()));
+                } else {
+                    conditions.push(condition_constructor(&JsonValue::Null));
+                }
+            } else {
+                return Err(SerdeError::custom(format!(
+                    "Unknown condition type: {}",
+                    condition_type
+                )));
+            }
+        }
+    }
+    Ok(conditions)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::graph::edge::tests::condition_implementation::{
-        NegativeCondition, PositiveCondition,
+        ConfigurableCondition, NegativeCondition, PositiveCondition,
     };
 
     use super::*;
@@ -63,6 +92,10 @@ mod tests {
 
     fn create_negative_condition() -> Box<dyn Condition<NodeContext>> {
         Box::new(NegativeCondition {})
+    }
+
+    fn create_configurable_condition(config: &JsonValue) -> Box<dyn Condition<NodeContext>> {
+        Box::new(ConfigurableCondition::new(config))
     }
 
     #[test]
@@ -90,5 +123,30 @@ mod tests {
         let conditions = deserialize_conditions(json, &condition_registry).unwrap();
 
         assert_eq!(conditions.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_deserialize_conditions_with_config() {
+        let json = r#"[
+            {
+                "condition_type": "configurable_condition",
+                "config": {
+                    "key": "value"
+                }
+            }
+        ]"#;
+
+        let condition_registry = HashMap::from([(
+            "configurable_condition",
+            create_configurable_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+        )]);
+
+        let conditions = deserialize_conditions_with_config(json, &condition_registry).unwrap();
+
+        assert_eq!(conditions.len(), 1);
+
+        let configurable_condition = conditions.get(0).unwrap();
+
+        assert!(configurable_condition.evaluate(&NodeContext::new()).await);
     }
 }
