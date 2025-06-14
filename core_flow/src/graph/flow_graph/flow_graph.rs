@@ -11,8 +11,6 @@ use crate::graph::{
     node::{node::Node, node_context::NodeContext},
 };
 
-use serde_json::Value as JsonValue;
-
 #[derive(Debug)]
 pub struct  FlowGraph {
     nodes: HashMap<String, Node>,
@@ -391,7 +389,8 @@ mod tests {
         use async_trait::async_trait;
 
         use crate::graph::{edge::{condition::Condition, tests::condition_implementation::PositiveCondition}, node::{action::Action, node_context::Value}};
-
+        use serde_json::Value as JsonValue;
+        
         use super::*;
 
         struct TestAction;

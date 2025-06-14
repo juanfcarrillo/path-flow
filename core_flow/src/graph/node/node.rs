@@ -8,8 +8,6 @@ use crate::graph::node::action_registry::ActionRegistry;
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
 
-use serde_json::Value as JsonValue;
-
 /// Represents a node in the conversation flow
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Node {
@@ -212,7 +210,7 @@ mod tests {
     }
 
     mod given_json {
-
+        use serde_json::Value as JsonValue;
         use super::*;
 
         fn create_test_action(_: &JsonValue) -> Box<dyn Action> {

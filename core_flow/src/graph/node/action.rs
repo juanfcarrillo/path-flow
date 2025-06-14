@@ -1,4 +1,4 @@
-use std::{collections::HashMap, f32::consts::E, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug};
 use serde::de::Error as SerdeError;
 use serde_json::Value as JsonValue;
 
@@ -90,36 +90,6 @@ mod tests {
         );
         assert_eq!(actions.len(), 1);
     }
-
-    fn create_test_action() -> Box<dyn Action> {
-        Box::new(TestAction::new())
-    }
-
-    struct TestAction;
-
-    impl TestAction {
-        fn new() -> Self {
-            TestAction
-        }
-    }
-
-    #[async_trait]
-    impl Action for TestAction {
-        async fn execute(
-            &self,
-            context: &mut NodeContext,
-        ) -> Result<NodeContext, Box<dyn std::error::Error>> {
-            context.variables.insert(
-                "test_var".to_string(),
-                Value::String("test_value".to_string()),
-            );
-            Ok(context.clone())
-        }
-        fn clone_box(&self) -> Box<dyn Action> {
-            Box::new(TestAction)
-        }
-    }
-
 
     fn create_test_action_config(config: &JsonValue) -> Box<dyn Action> {
         Box::new(TestActionConfig::new(config))

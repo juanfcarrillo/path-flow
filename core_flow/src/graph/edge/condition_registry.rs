@@ -37,7 +37,6 @@ mod tests {
     use crate::graph::edge::tests::condition_implementation::{
         PositiveCondition, NegativeCondition,
     };
-    use serde_json::json;
 
     fn create_positive_condition(_config: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(PositiveCondition {})
