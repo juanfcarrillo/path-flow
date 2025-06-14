@@ -61,11 +61,11 @@ mod tests {
 
     use super::*;
 
-    fn create_positive_condition() -> Box<dyn Condition<NodeContext>> {
+    fn create_positive_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(PositiveCondition {})
     }
 
-    fn create_negative_condition() -> Box<dyn Condition<NodeContext>> {
+    fn create_negative_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(NegativeCondition {})
     }
 
@@ -74,32 +74,31 @@ mod tests {
     }
 
     
-    // #[test]
-    // fn test_deserialize_conditions() {
-    //     let json = r#"[
-    //         {
-    //             "condition_type": "positive_condition"
-    //         },
-    //         {
-    //             "condition_type": "negative_condition"
-    //         }
-    //     ]"#;
+    #[test]
+    fn test_deserialize_conditions() {
+        let json = r#"[
+            {
+                "condition_type": "positive_condition"
+            },
+            {
+                "condition_type": "negative_condition"
+            }
+        ]"#;
 
-    //     let condition_registry = HashMap::from([
-    //         (
-    //             "positive_condition",
-    //             create_positive_condition as fn() -> Box<dyn Condition<NodeContext>>,
-    //         ),
-    //         (
-    //             "negative_condition",
-    //             create_negative_condition as fn() -> Box<dyn Condition<NodeContext>>,
-    //         ),
-    //     ]);
+        let mut condition_registry = ConditionRegistry::new();
+        condition_registry.register_condition(
+            "positive_condition",
+            create_positive_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+        );
+        condition_registry.register_condition(
+            "negative_condition",
+            create_negative_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+        );
 
-    //     let conditions = deserialize_conditions(json, &condition_registry).unwrap();
+        let conditions = deserialize_conditions_with_config(json, &condition_registry).unwrap();
 
-    //     assert_eq!(conditions.len(), 2);
-    // }
+        assert_eq!(conditions.len(), 2);
+    }
 
     #[tokio::test]
     async fn test_deserialize_conditions_with_config() {
