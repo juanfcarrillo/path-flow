@@ -63,10 +63,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ))?;
 
     let mut action_registry = ActionRegistry::new();
-    // action_registry.register_action(
-    //     "ai_action",
-    //     AIAction::create_ai_action as fn(&serde_json::Value) -> Box<dyn Action>,
-    // );
+    action_registry.register_action(
+        "ai_action",
+        AIAction::create_registrable_action("kjhjkh".to_string()),
+    );
     let condition_registry= ConditionRegistry::new();
 
     let json_graph = r#"
@@ -86,7 +86,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "config": {
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            }
+                           }
                         }
                     ]
                 },

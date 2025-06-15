@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use core_flow::{
     flow::conversation::Message,
-    graph::{action::action::Action, node::node_context::{NodeContext, Value}},
+    graph::{action::{action::Action, registrable_action::RegistrableAction}, node::node_context::{NodeContext, Value}},
 };
 use rig::{
     client::{CompletionClient, ProviderClient},
@@ -23,6 +23,14 @@ impl AIAction {
             model,
             system_prompt,
         }
+    }
+
+    pub fn create_registrable_action(name: String) -> RegistrableAction {
+        RegistrableAction::new(
+            "ai_action".to_string(),
+            AIAction::create_ai_action as fn(&serde_json::Value) -> Box<dyn Action>,
+            name,
+        )
     }
 
     async fn process_messages(
@@ -108,3 +116,4 @@ mod tests {
         assert!(result.is_ok());
     }
 }
+
