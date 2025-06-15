@@ -1,10 +1,8 @@
-use std::{collections::HashMap, fmt::Debug};
-use serde::de::Error as SerdeError;
-use serde_json::Value as JsonValue;
+use std::{fmt::Debug};
 
 use async_trait::async_trait;
 
-use crate::graph::{action::action_registry::ActionRegistry, node::node_context::NodeContext};
+use crate::graph::{node::node_context::NodeContext};
 
 
 #[async_trait]
@@ -25,37 +23,9 @@ impl Clone for Box<dyn Action> {
     }
 }
 
-pub fn deserialize_actions_with_config(
-    json_data: &str,
-    action_registry: &ActionRegistry,
-) -> Result<Vec<Box<dyn Action>>, serde_json::Error> {
-    let actions_data: Vec<HashMap<String, JsonValue>> = serde_json::from_str(json_data)?;
-    let mut actions: Vec<Box<dyn Action>> = Vec::new();
-
-    for action_data in actions_data {
-        if let Some(action_type) = action_data.get("action_type").and_then(|v| v.as_str()) {
-            if let Some(action_constructor) = action_registry.get_actions().get(action_type) {
-                let config = action_data.get("config");
-                if config.is_some() {
-                    actions.push((action_constructor.builder_fn)(config.unwrap()));
-                } else {
-                    actions.push((action_constructor.builder_fn)(&JsonValue::Null));
-                }
-            } else {
-                return Err(serde_json::Error::custom(format!(
-                    "Unknown action type: {}",
-                    action_type
-                )));
-            }
-        }
-    }
-
-    Ok(actions)
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::graph::{action::tests::action_implementation::TestAction, node::node_context::Value};
+    use crate::graph::{action::{action_registry::ActionRegistry, tests::action_implementation::TestAction, utils::{build_instances, deserialize_actions}}, node::node_context::Value};
 
     use super::*;
 
@@ -64,8 +34,15 @@ mod tests {
         let json = r#"[
             {
                 "action_type": "test_action",
+                "name": "Test Action",
                 "config": {
                     "test_config": "test_value"
+                },
+                "input_vars": {
+                    "test_var": "String"
+                },
+                "output_vars": {
+                    "test_var": "String"
                 }
             }
         ]"#;
@@ -77,7 +54,7 @@ mod tests {
             TestAction::create_registrable_action(),
         );
 
-        let actions = deserialize_actions_with_config(json, &action_registry).unwrap();
+        let actions = build_instances(deserialize_actions(json, &action_registry).unwrap());
 
         let action = actions.get(0).unwrap();
 

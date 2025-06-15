@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use crate::graph::action::{registrable_action::RegistrableAction};
+use crate::graph::action::{registrable_action::RegistrableActionMold};
 
 pub struct ActionRegistry {
-    actions: HashMap<String, RegistrableAction>,
+    actions: HashMap<String, RegistrableActionMold>,
 }
 
 impl ActionRegistry {
@@ -16,14 +16,14 @@ impl ActionRegistry {
     pub fn register_action(
         &mut self,
         action_type: &str,
-        action_constructor: RegistrableAction,
+        action_constructor: RegistrableActionMold,
     ) -> &mut Self {
         self.actions
             .insert(action_type.to_string(), action_constructor);
         self
     }
 
-    pub fn get_actions(&self) -> &HashMap<String, RegistrableAction> {
+    pub fn get_actions(&self) -> &HashMap<String, RegistrableActionMold> {
         &self.actions
     }
 }

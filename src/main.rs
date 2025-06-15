@@ -3,7 +3,11 @@ use core_flow::{
         conversation::{Conversation, ConversationRepository, Message},
         flow_manager::FlowManager,
     },
-    graph::{action::{action::Action, action_registry::ActionRegistry}, edge::condition_registry::ConditionRegistry, flow_graph::flow_graph::FlowGraph},
+    graph::{
+        action::{action_registry::ActionRegistry},
+        edge::condition_registry::ConditionRegistry,
+        flow_graph::flow_graph::FlowGraph,
+    },
 };
 use implementations::ai_action::ai_action::AIAction;
 use std::collections::HashMap;
@@ -67,7 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "ai_action",
         AIAction::create_registrable_action("kjhjkh".to_string()),
     );
-    let condition_registry= ConditionRegistry::new();
+    let condition_registry = ConditionRegistry::new();
 
     let json_graph = r#"
         {
@@ -82,11 +86,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     },
                     "actions": [
                         {
+                            "name": "ai_action",
                             "action_type": "ai_action",
                             "config": {
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                           }
+                           },
+                            "input_vars": {},
+                            "output_vars": {}
                         }
                     ]
                 },
@@ -100,11 +107,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     },
                     "actions": [
                         {
+                            "name": "ai_action",
                             "action_type": "ai_action",
                             "config": {
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            }
+                            },
+                            "input_vars": {},
+                            "output_vars": {}
                         }
                     ]
                 },
@@ -118,11 +128,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     },
                     "actions": [
                         {
+                            "name": "ai_action",
                             "action_type": "ai_action",
                             "config": {
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            }
+                            },
+                            "input_vars": {},
+                            "output_vars": {}
                         }
                     ]
                 }
@@ -151,7 +164,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ]
         }"#;
 
-    let flow_graph = FlowGraph::from_json(json_graph, &action_registry, &condition_registry).unwrap();
+    let flow_graph =
+        FlowGraph::from_json(json_graph, &action_registry, &condition_registry).unwrap();
 
     let mut flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
 

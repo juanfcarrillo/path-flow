@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::graph::action::action::{deserialize_actions_with_config, Action};
+use crate::graph::action::action::Action;
 use crate::graph::action::action_registry::ActionRegistry;
+use crate::graph::action::utils::{build_instances, deserialize_actions};
 
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
@@ -41,9 +42,8 @@ impl Node {
         let json_map: HashMap<String, serde_json::Value> = serde_json::from_str(json)?;
 
         if let Some(actions_value) = json_map.get("actions") {
-            if let Ok(actions) = deserialize_actions_with_config(actions_value.to_string().as_str(), action_registry) {
-                node.actions = actions;
-            }
+            let actions = deserialize_actions(actions_value.to_string().as_str(), action_registry)?;
+            node.actions = build_instances(actions);
         }
         Ok(node)
     }
@@ -204,7 +204,7 @@ mod tests {
             action_registry.register_action("test_action", TestAction::create_registrable_action());
 
             let node = Node::from_json(json, &action_registry).unwrap();
-            
+
             assert_eq!(node.id, "welcome");
             assert_eq!(node.node_type, "conversational");
             assert_eq!(node.name, "Welcome");

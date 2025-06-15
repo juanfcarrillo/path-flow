@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde_json::Value as JsonValue;
 
-use crate::graph::{action::{action::Action, registrable_action::RegistrableAction}, node::node_context::{NodeContext, Value}};
+use crate::graph::{action::{action::Action, registrable_action::{RegistrableActionMold}}, node::node_context::{NodeContext, Value}};
 
 #[derive(Clone)]
 pub struct TestAction {
@@ -16,11 +16,10 @@ impl TestAction {
         }
     }
 
-    pub fn create_registrable_action() -> RegistrableAction {
-        RegistrableAction::new(
+    pub fn create_registrable_action() -> RegistrableActionMold {
+        RegistrableActionMold::new(
             "test_action".to_string(),
-            create_test_action_config as fn(&JsonValue) -> Box<dyn Action>,
-            "Test Action".to_string(),
+            create_test_action_config as fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>,
         )
     }
 }
@@ -44,6 +43,6 @@ impl Action for TestAction {
 }
 
 // Lets register the action
-fn create_test_action_config(json_config: &JsonValue) -> Box<dyn Action> {
+fn create_test_action_config(json_config: &JsonValue, input_vars: &JsonValue, output_vars: &JsonValue) -> Box<dyn Action> {
     Box::new(TestAction::new(json_config))
 }
