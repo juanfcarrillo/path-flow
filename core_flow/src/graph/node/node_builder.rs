@@ -1,4 +1,4 @@
-use crate::graph::node::action::Action;
+use crate::graph::action::action::Action;
 
 use super::{node::{Node}, node_context::{NodeContext, Value}};
 

@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 
 use async_trait::async_trait;
 
-use crate::graph::node::{action_registry::ActionRegistry, node_context::NodeContext};
+use crate::graph::{action::action_registry::ActionRegistry, node::node_context::NodeContext};
 
 
 #[async_trait]

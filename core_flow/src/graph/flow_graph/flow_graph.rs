@@ -3,9 +3,9 @@ use std::fmt;
 
 use serde_json::Value;
 
+use crate::graph::action::action_registry::ActionRegistry;
 use crate::graph::edge::condition_registry::ConditionRegistry;
 use crate::graph::flow_graph::flow_graph_builder::FlowGraphBuilder;
-use crate::graph::node::action_registry::{ActionRegistry};
 use crate::graph::{
     edge::edge::Edge,
     node::{node::Node, node_context::NodeContext},
@@ -388,7 +388,7 @@ mod tests {
     mod given_json {
         use async_trait::async_trait;
 
-        use crate::graph::{edge::{condition::Condition, tests::condition_implementation::PositiveCondition}, node::{action::Action, node_context::Value}};
+        use crate::graph::{action::action::Action, edge::{condition::Condition, tests::condition_implementation::PositiveCondition}, node::node_context::Value };
         use serde_json::Value as JsonValue;
         
         use super::*;

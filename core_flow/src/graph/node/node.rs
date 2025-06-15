@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::graph::node::action::{deserialize_actions_with_config, Action};
-use crate::graph::node::action_registry::ActionRegistry;
+use crate::graph::action::action::{deserialize_actions_with_config, Action};
+use crate::graph::action::action_registry::ActionRegistry;
 
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
