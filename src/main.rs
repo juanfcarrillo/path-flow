@@ -63,10 +63,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ))?;
 
     let mut action_registry = ActionRegistry::new();
-    action_registry.register_action(
-        "ai_action",
-        AIAction::create_ai_action as fn(&serde_json::Value) -> Box<dyn Action>,
-    );
+    // action_registry.register_action(
+    //     "ai_action",
+    //     AIAction::create_ai_action as fn(&serde_json::Value) -> Box<dyn Action>,
+    // );
     let condition_registry= ConditionRegistry::new();
 
     let json_graph = r#"

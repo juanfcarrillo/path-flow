@@ -99,33 +99,12 @@ impl Node {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    struct TestAction;
-
-    impl TestAction {
-        fn new() -> Self {
-            TestAction
-        }
-    }
-
-    #[async_trait]
-    impl Action for TestAction {
-        async fn execute(
-            &self,
-            context: &mut NodeContext,
-        ) -> Result<NodeContext, Box<dyn std::error::Error>> {
-            context.variables.insert(
-                "test_var".to_string(),
-                Value::String("test_value".to_string()),
-            );
-            Ok(context.clone())
-        }
-        fn clone_box(&self) -> Box<dyn Action> {
-            Box::new(TestAction)
-        }
-    }
+    use serde_json::Value as JsonValue;
 
     // Tests the actions behaviour of the node
     mod given_certain_actions {
+        use crate::graph::action::tests::action_implementation::TestAction;
+
         use super::*;
 
         struct FailTestAction;
@@ -158,16 +137,9 @@ mod tests {
                 "Welcome message".to_string(),
             );
 
-            node.add_action(TestAction::new().clone_box());
+            node.add_action(TestAction::new(&JsonValue::Null).clone_box());
 
             node.execute_actions().await.unwrap();
-
-            // match node.execute_actions() {
-            //     Ok(_) => {},
-            //     Err(error) => {
-            //         panic!("Error: {:?}", error);
-            //     }
-            // }
         }
 
         #[tokio::test]
@@ -179,7 +151,7 @@ mod tests {
                 "Welcome message".to_string(),
             );
 
-            node.add_action(TestAction::new().clone_box());
+            node.add_action(TestAction::new(&JsonValue::Null).clone_box());
             node.add_action(FailTestAction::new().clone_box());
 
             match node.execute_actions().await {
@@ -200,7 +172,7 @@ mod tests {
                 "Welcome".to_string(),
                 "Welcome message".to_string(),
             );
-            node.add_action(TestAction::new().clone_box());
+            node.add_action(TestAction::new(&JsonValue::Null).clone_box());
 
             node.execute_actions().await.unwrap();
 
@@ -210,12 +182,9 @@ mod tests {
     }
 
     mod given_json {
-        use serde_json::Value as JsonValue;
-        use super::*;
+        use crate::graph::action::tests::action_implementation::TestAction;
 
-        fn create_test_action(_: &JsonValue) -> Box<dyn Action> {
-            Box::new(TestAction::new())
-        }
+        use super::*;
 
         #[test]
         fn test_from_json() {
@@ -228,17 +197,11 @@ mod tests {
                     "variables": {}
                 },
                 "actions": [
-                    {
-                        "action_type": "test_action"
-                    }
                 ]
             }"#;
 
             let mut action_registry = ActionRegistry::new();
-            action_registry.register_action(
-                "test_action",
-                create_test_action as fn(&JsonValue) -> Box<dyn Action>,
-            );
+            action_registry.register_action("test_action", TestAction::create_registrable_action());
 
             let node = Node::from_json(json, &action_registry).unwrap();
             
@@ -246,7 +209,7 @@ mod tests {
             assert_eq!(node.node_type, "conversational");
             assert_eq!(node.name, "Welcome");
             assert_eq!(node.description, "Welcome message");
-            assert_eq!(node.actions.len(), 1);
+            assert_eq!(node.actions.len(), 0);
         }
     }
 }

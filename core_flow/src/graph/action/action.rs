@@ -37,9 +37,9 @@ pub fn deserialize_actions_with_config(
             if let Some(action_constructor) = action_registry.get_actions().get(action_type) {
                 let config = action_data.get("config");
                 if config.is_some() {
-                    actions.push(action_constructor(config.unwrap()));
+                    actions.push((action_constructor.builder_fn)(config.unwrap()));
                 } else {
-                    actions.push(action_constructor(&JsonValue::Null));
+                    actions.push((action_constructor.builder_fn)(&JsonValue::Null));
                 }
             } else {
                 return Err(serde_json::Error::custom(format!(
@@ -55,7 +55,7 @@ pub fn deserialize_actions_with_config(
 
 #[cfg(test)]
 mod tests {
-    use crate::graph::node::node_context::Value;
+    use crate::graph::{action::tests::action_implementation::TestAction, node::node_context::Value};
 
     use super::*;
 
@@ -71,9 +71,10 @@ mod tests {
         ]"#;
 
         let mut action_registry = ActionRegistry::new();
+
         action_registry.register_action(
             "test_action",
-            create_test_action_config as fn(&JsonValue) -> Box<dyn Action>
+            TestAction::create_registrable_action(),
         );
 
         let actions = deserialize_actions_with_config(json, &action_registry).unwrap();
@@ -89,40 +90,5 @@ mod tests {
             &Value::String("test_value".to_string())
         );
         assert_eq!(actions.len(), 1);
-    }
-
-    fn create_test_action_config(config: &JsonValue) -> Box<dyn Action> {
-        Box::new(TestActionConfig::new(config))
-    }
-
-    struct TestActionConfig {
-        config: JsonValue,
-    }
-
-    impl TestActionConfig {
-        fn new(config: &JsonValue) -> Self {
-            TestActionConfig {
-                config: config.clone(),
-            }
-        }
-    }
-
-    #[async_trait]
-    impl Action for TestActionConfig {
-        async fn execute(
-            &self,
-            context: &mut NodeContext,
-        ) -> Result<NodeContext, Box<dyn std::error::Error>> {
-            context.variables.insert(
-                "test_var".to_string(),
-                Value::String(self.config["test_config"].as_str().unwrap().to_string()),
-            );
-            Ok(context.clone())
-        }
-        fn clone_box(&self) -> Box<dyn Action> {
-            Box::new(TestActionConfig {
-                config: self.config.clone(),
-            })
-        }
     }
 }
