@@ -31,9 +31,7 @@ impl ActionRegistry {
 
 #[cfg(test)]
 mod tests {
-    use async_trait::async_trait;
-
-    use crate::graph::node::node_context::{NodeContext, Value};
+    use crate::graph::{action::tests::action_implementation::create_test_action};
 
     use super::*;
 
@@ -43,46 +41,11 @@ mod tests {
 
         action_registry.register_action(
             "test_action",
-            create_test_action as fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>,
+            create_test_action,
         );
 
         let actions = action_registry.get_actions();
 
         assert_eq!(actions.len(), 1);
-    }
-
-    fn create_test_action(config: &JsonValue, input_vars: &JsonValue, output_vars: &JsonValue) -> Box<dyn Action> {
-        Box::new(TestAction::new(config))
-    }
-
-    struct TestAction {
-        config: JsonValue,
-    }
-
-    impl TestAction {
-        fn new(config: &JsonValue) -> Self {
-            TestAction {
-                config: config.clone(),
-            }
-        }
-    }
-
-    #[async_trait]
-    impl Action for TestAction {
-        async fn execute(
-            &self,
-            context: &mut NodeContext,
-        ) -> Result<NodeContext, Box<dyn std::error::Error>> {
-            context.variables.insert(
-                "test_var".to_string(),
-                Value::String(self.config["test_config"].as_str().unwrap().to_string()),
-            );
-            Ok(context.clone())
-        }
-        fn clone_box(&self) -> Box<dyn Action> {
-            Box::new(TestAction {
-                config: self.config.clone(),
-            })
-        }
     }
 }

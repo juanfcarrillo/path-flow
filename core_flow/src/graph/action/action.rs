@@ -26,7 +26,6 @@ impl Clone for Box<dyn Action> {
 #[cfg(test)]
 mod tests {
     use crate::graph::{action::{action_registry::ActionRegistry, tests::action_implementation::create_test_action, utils::deserialize_actions}, node::node_context::Value};
-    use serde_json::Value as JsonValue;
 
     use super::*;
 
@@ -60,40 +59,5 @@ mod tests {
             &Value::String("test_value".to_string())
         );
         assert_eq!(actions.len(), 1);
-    }
-
-    fn create_test_action_config(config: &JsonValue) -> Box<dyn Action> {
-        Box::new(TestActionConfig::new(config))
-    }
-
-    struct TestActionConfig {
-        config: JsonValue,
-    }
-
-    impl TestActionConfig {
-        fn new(config: &JsonValue) -> Self {
-            TestActionConfig {
-                config: config.clone(),
-            }
-        }
-    }
-
-    #[async_trait]
-    impl Action for TestActionConfig {
-        async fn execute(
-            &self,
-            context: &mut NodeContext,
-        ) -> Result<NodeContext, Box<dyn std::error::Error>> {
-            context.variables.insert(
-                "test_var".to_string(),
-                Value::String(self.config["test_config"].as_str().unwrap().to_string()),
-            );
-            Ok(context.clone())
-        }
-        fn clone_box(&self) -> Box<dyn Action> {
-            Box::new(TestActionConfig {
-                config: self.config.clone(),
-            })
-        }
     }
 }
