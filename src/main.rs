@@ -3,7 +3,7 @@ use core_flow::{
         conversation::{Conversation, ConversationRepository, Message},
         flow_manager::FlowManager,
     },
-    graph::{edge::{condition_registry::ConditionRegistry}, flow_graph::flow_graph::FlowGraph, node::{action::Action, action_registry::ActionRegistry}},
+    graph::{action::{action::Action, action_registry::ActionRegistry}, edge::condition_registry::ConditionRegistry, flow_graph::flow_graph::FlowGraph},
 };
 use implementations::ai_action::ai_action::AIAction;
 use std::collections::HashMap;

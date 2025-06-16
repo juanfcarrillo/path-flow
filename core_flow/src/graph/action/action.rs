@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 
 use async_trait::async_trait;
 
-use crate::graph::node::{action_registry::ActionRegistry, node_context::NodeContext};
+use crate::graph::{action::action_registry::ActionRegistry, node::node_context::NodeContext};
 
 
 #[async_trait]
@@ -39,7 +39,7 @@ pub fn deserialize_actions_with_config(
                 if config.is_some() {
                     actions.push(action_constructor(config.unwrap()));
                 } else {
-                    actions.push(action_constructor(&JsonValue::Null));
+                    return Err(serde_json::Error::custom("Action config is required"));
                 }
             } else {
                 return Err(serde_json::Error::custom(format!(

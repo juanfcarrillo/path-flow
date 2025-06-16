@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 use core_flow::{
     flow::conversation::Message,
-    graph::node::{
-        action::Action, node_context::{NodeContext, Value}
-    },
+    graph::{action::action::Action, node::node_context::{NodeContext, Value}},
 };
 use rig::{
     client::{CompletionClient, ProviderClient},

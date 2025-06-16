@@ -1,7 +1,7 @@
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 
-use crate::graph::node::action::Action;
+use crate::graph::action::action::Action;
 
 pub struct ActionRegistry {
     actions: HashMap<String, fn(&JsonValue) -> Box<dyn Action>>,
