@@ -114,7 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
-                            "output_vars": {}
+                            "output_vars": []
                         }
                     ]
                 },
@@ -137,7 +137,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
-                            "output_vars": {}
+                            "output_vars": []
                         }
                     ]
                 }

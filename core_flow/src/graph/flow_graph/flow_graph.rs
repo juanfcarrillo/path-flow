@@ -434,7 +434,7 @@ mod tests {
                                     "id": "test_action"
                                 },
                                 "input_vars": {},
-                                "output_vars": {},
+                                "output_vars": [],
                                 "action_type": "test_action"
                             }
                         ]
