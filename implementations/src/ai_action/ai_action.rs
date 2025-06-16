@@ -26,6 +26,13 @@ impl AIAction {
         }
     }
 
+    pub fn create_registrable_action(name: String) -> RegistrableActionMold {
+        RegistrableActionMold::new(
+            "ai_action".to_string(),
+            AIAction::create_ai_action as fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>,
+        )
+    }
+
     async fn process_messages(
         &self,
         messages: Vec<Message>,
@@ -43,6 +50,7 @@ impl AIAction {
         Ok(response)
     }
 
+    pub fn create_ai_action(config: &JsonValue, _: &JsonValue, _: &JsonValue) -> Box<dyn Action> {
     pub fn create_ai_action(config: &JsonValue, _: &JsonValue, _: &JsonValue) -> Box<dyn Action> {
         Box::new(AIAction::new(
             config["model"].as_str().unwrap().to_string(),
@@ -109,3 +117,4 @@ mod tests {
         assert!(result.is_ok());
     }
 }
+

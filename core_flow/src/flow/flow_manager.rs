@@ -66,7 +66,6 @@ impl FlowManager {
 
         self.conversation_repository.update_conversation(conversation_id, conversation)?;
 
-
         Ok(final_node_context.clone())
     }
 }
