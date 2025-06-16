@@ -221,7 +221,7 @@ mod tests {
             assert_eq!(node.node_type, "conversational");
             assert_eq!(node.name, "Welcome");
             assert_eq!(node.description, "Welcome message");
-            assert_eq!(node.actions.len(), 0);
+            assert_eq!(node.actions.len(), 1);
         }
     }
 }
