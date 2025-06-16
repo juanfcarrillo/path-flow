@@ -115,9 +115,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             },
                             "input_vars": {},
                             "output_vars": {}
-                            },
-                            "input_vars": {},
-                            "output_vars": {}
                         }
                     ]
                 },
@@ -138,9 +135,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 "name": "AI Action",
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            },
-                            "input_vars": {},
-                            "output_vars": {}
                             },
                             "input_vars": {},
                             "output_vars": {}
