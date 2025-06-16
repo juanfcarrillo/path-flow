@@ -25,7 +25,7 @@ impl Clone for Box<dyn Action> {
 
 #[cfg(test)]
 mod tests {
-    use crate::graph::{action::{action_registry::ActionRegistry, tests::action_implementation::create_test_action, utils::deserialize_actions}, node::node_context::Value};
+    use crate::graph::{action::{action_registry::ActionRegistry, tests::action_implementation::create_test_action, utils::action_deserializer::deserialize_actions}, node::node_context::Value};
 
     use super::*;
 

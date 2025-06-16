@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 use crate::graph::action::action::{Action};
 use crate::graph::action::action_registry::ActionRegistry;
-use crate::graph::action::utils::deserialize_actions;
+use crate::graph::action::utils::action_deserializer::deserialize_actions;
 
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
