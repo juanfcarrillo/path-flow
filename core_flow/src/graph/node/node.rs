@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::graph::action::action::Action;
+use crate::graph::action::action::{Action};
 use crate::graph::action::action_registry::ActionRegistry;
-use crate::graph::action::utils::{build_instances, deserialize_actions};
+use crate::graph::action::utils::action_deserializer::deserialize_actions;
 
 use super::node_builder::NodeBuilder;
 use super::node_context::{NodeContext, Value};
@@ -43,7 +43,7 @@ impl Node {
 
         if let Some(actions_value) = json_map.get("actions") {
             let actions = deserialize_actions(actions_value.to_string().as_str(), action_registry)?;
-            node.actions = build_instances(actions);
+            node.actions = actions;
         }
         Ok(node)
     }
@@ -182,7 +182,7 @@ mod tests {
     }
 
     mod given_json {
-        use crate::graph::action::tests::action_implementation::TestAction;
+        use crate::graph::action::tests::action_implementation::create_test_action;
 
         use super::*;
 
@@ -197,11 +197,23 @@ mod tests {
                     "variables": {}
                 },
                 "actions": [
+                    {
+                        "config": {
+                            "name": "test_action",
+                            "id": "test_action"
+                        },
+                        "input_vars": {},
+                        "output_vars": {},
+                        "action_type": "test_action"
+                    }
                 ]
             }"#;
 
             let mut action_registry = ActionRegistry::new();
-            action_registry.register_action("test_action", TestAction::create_registrable_action());
+            action_registry.register_action(
+                "test_action",
+                create_test_action
+            );
 
             let node = Node::from_json(json, &action_registry).unwrap();
 

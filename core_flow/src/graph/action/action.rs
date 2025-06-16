@@ -25,7 +25,7 @@ impl Clone for Box<dyn Action> {
 
 #[cfg(test)]
 mod tests {
-    use crate::graph::{action::{action_registry::ActionRegistry, tests::action_implementation::TestAction, utils::{build_instances, deserialize_actions}}, node::node_context::Value};
+    use crate::graph::{action::{action_registry::ActionRegistry, tests::action_implementation::create_test_action, utils::action_deserializer::deserialize_actions}, node::node_context::Value};
 
     use super::*;
 
@@ -34,27 +34,23 @@ mod tests {
         let json = r#"[
             {
                 "action_type": "test_action",
-                "name": "Test Action",
                 "config": {
+                    "name": "test_action",
+                    "id": "test_action",
                     "test_config": "test_value"
                 },
-                "input_vars": {
-                    "test_var": "String"
-                },
-                "output_vars": {
-                    "test_var": "String"
-                }
+                "input_vars": {},
+                "output_vars": {}
             }
         ]"#;
 
         let mut action_registry = ActionRegistry::new();
-
         action_registry.register_action(
             "test_action",
-            TestAction::create_registrable_action(),
+            create_test_action
         );
 
-        let actions = build_instances(deserialize_actions(json, &action_registry).unwrap());
+        let actions = deserialize_actions(json, &action_registry).unwrap();
 
         let action = actions.get(0).unwrap();
 

@@ -4,6 +4,7 @@ use std::fmt;
 use serde_json::Value;
 
 use crate::graph::action::action_registry::ActionRegistry;
+use crate::graph::action::action_registry::ActionRegistry;
 use crate::graph::edge::condition_registry::ConditionRegistry;
 use crate::graph::flow_graph::flow_graph_builder::FlowGraphBuilder;
 use crate::graph::{
@@ -386,8 +387,7 @@ mod tests {
     }
 
     mod given_json {
-
-        use crate::graph::{action::tests::action_implementation::TestAction, edge::{condition::Condition, tests::condition_implementation::PositiveCondition} };
+        use crate::graph::{action::tests::action_implementation::create_test_action, edge::{condition::Condition, tests::condition_implementation::PositiveCondition}};
         use serde_json::Value as JsonValue;
         
         use super::*;
@@ -410,6 +410,12 @@ mod tests {
                         },
                         "actions": [
                             {
+                                "config": {
+                                    "name": "test_action",
+                                    "id": "test_action"
+                                },
+                                "input_vars": {},
+                                "output_vars": {},
                                 "action_type": "test_action"
                             }
                         ]
@@ -424,6 +430,12 @@ mod tests {
                         },
                         "actions": [
                             {
+                                "config": {
+                                    "name": "test_action",
+                                    "id": "test_action"
+                                },
+                                "input_vars": {},
+                                "output_vars": {},
                                 "action_type": "test_action"
                             }
                         ]
@@ -446,7 +458,7 @@ mod tests {
             let mut action_registry = ActionRegistry::new();
             action_registry.register_action(
                 "test_action",
-                TestAction::create_registrable_action(),
+                create_test_action
             );
 
             let mut condition_registry = ConditionRegistry::new();
