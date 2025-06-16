@@ -35,8 +35,12 @@ mod tests {
             {
                 "action_type": "test_action",
                 "config": {
+                    "name": "test_action",
+                    "id": "test_action",
                     "test_config": "test_value"
-                }
+                },
+                "input_vars": {},
+                "output_vars": {}
             }
         ]"#;
 

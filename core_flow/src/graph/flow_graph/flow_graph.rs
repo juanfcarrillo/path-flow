@@ -409,6 +409,12 @@ mod tests {
                         },
                         "actions": [
                             {
+                                "config": {
+                                    "name": "test_action",
+                                    "id": "test_action"
+                                },
+                                "input_vars": {},
+                                "output_vars": {},
                                 "action_type": "test_action"
                             }
                         ]
@@ -423,6 +429,12 @@ mod tests {
                         },
                         "actions": [
                             {
+                                "config": {
+                                    "name": "test_action",
+                                    "id": "test_action"
+                                },
+                                "input_vars": {},
+                                "output_vars": {},
                                 "action_type": "test_action"
                             }
                         ]
