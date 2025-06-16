@@ -3,7 +3,7 @@ use core_flow::{
         conversation::{Conversation, ConversationRepository, Message},
         flow_manager::FlowManager,
     },
-    graph::{action::{action::Action, action_registry::ActionRegistry}, edge::condition_registry::ConditionRegistry, flow_graph::flow_graph::FlowGraph},
+    graph::{action::{action_registry::ActionRegistry}, edge::condition_registry::ConditionRegistry, flow_graph::flow_graph::FlowGraph},
 };
 use implementations::ai_action::ai_action::AIAction;
 use std::collections::HashMap;
@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut action_registry = ActionRegistry::new();
     action_registry.register_action(
         "ai_action",
-        AIAction::create_ai_action as fn(&serde_json::Value) -> Box<dyn Action>,
+        AIAction::create_ai_action,
     );
     let condition_registry= ConditionRegistry::new();
 
@@ -84,9 +84,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         {
                             "action_type": "ai_action",
                             "config": {
+                                "id": "ai_action",
+                                "name": "AI Action",
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            }
+                            },
+                            "input_vars": {},
+                            "output_vars": {}
                         }
                     ]
                 },
@@ -102,9 +106,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         {
                             "action_type": "ai_action",
                             "config": {
+                                "id": "ai_action",
+                                "name": "AI Action",
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            }
+                            },
+                            "input_vars": {},
+                            "output_vars": {}
                         }
                     ]
                 },
@@ -120,9 +128,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         {
                             "action_type": "ai_action",
                             "config": {
+                                "id": "ai_action",
+                                "name": "AI Action",
                                 "model": "gpt-4o-mini",
                                 "system_prompt": "Dont answer the question, just reply mheee"
-                            }
+                            },
+                            "input_vars": {},
+                            "output_vars": {}
                         }
                     ]
                 }

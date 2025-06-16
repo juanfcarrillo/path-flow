@@ -386,44 +386,13 @@ mod tests {
     }
 
     mod given_json {
-        use async_trait::async_trait;
-
-        use crate::graph::{action::action::Action, edge::{condition::Condition, tests::condition_implementation::PositiveCondition}, node::node_context::Value};
+        use crate::graph::{action::tests::action_implementation::create_test_action, edge::{condition::Condition, tests::condition_implementation::PositiveCondition}, node::node_context::Value};
         use serde_json::Value as JsonValue;
         
         use super::*;
 
-        struct TestAction;
-
-        impl TestAction {
-            fn new() -> Self {
-                TestAction
-            }
-        }
-
-        #[async_trait]
-        impl Action for TestAction {
-            async fn execute(
-                &self,
-                context: &mut NodeContext,
-            ) -> Result<NodeContext, Box<dyn std::error::Error>> {
-                context.variables.insert(
-                    "test_var".to_string(),
-                    Value::String("test_value".to_string()),
-                );
-                Ok(context.clone())
-            }
-            fn clone_box(&self) -> Box<dyn Action> {
-                Box::new(TestAction)
-            }
-        }
-
         fn create_positive_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
             Box::new(PositiveCondition {})
-        }
-
-        fn create_test_action(_: &JsonValue) -> Box<dyn Action> {
-            Box::new(TestAction::new())
         }
 
         #[test]
@@ -476,7 +445,7 @@ mod tests {
             let mut action_registry = ActionRegistry::new();
             action_registry.register_action(
                 "test_action",
-                create_test_action as fn(&JsonValue) -> Box<dyn Action>,
+                create_test_action
             );
 
             let mut condition_registry = ConditionRegistry::new();

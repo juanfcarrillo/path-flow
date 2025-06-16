@@ -8,6 +8,7 @@ use rig::{
     completion::Chat,
     providers::openai,
 };
+use serde_json::Value as JsonValue;
 
 use crate::ai_action::message_adapter::{rig_message_adapter};
 
@@ -42,7 +43,7 @@ impl AIAction {
         Ok(response)
     }
 
-    pub fn create_ai_action(config: &serde_json::Value) -> Box<dyn Action> {
+    pub fn create_ai_action(config: &JsonValue, _: &JsonValue, _: &JsonValue) -> Box<dyn Action> {
         Box::new(AIAction::new(
             config["model"].as_str().unwrap().to_string(),
             config["system_prompt"].as_str().unwrap().to_string(),

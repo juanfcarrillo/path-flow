@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::graph::action::action::Action;
 
 pub struct ActionRegistry {
-    actions: HashMap<String, fn(&JsonValue) -> Box<dyn Action>>,
+    actions: HashMap<String, fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>>,
 }
 
 impl ActionRegistry {
@@ -17,14 +17,14 @@ impl ActionRegistry {
     pub fn register_action(
         &mut self,
         action_type: &str,
-        action_constructor: fn(&JsonValue) -> Box<dyn Action>,
+        action_constructor: fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>,
     ) -> &mut Self {
         self.actions
             .insert(action_type.to_string(), action_constructor);
         self
     }
 
-    pub fn get_actions(&self) -> &HashMap<String, fn(&JsonValue) -> Box<dyn Action>> {
+    pub fn get_actions(&self) -> &HashMap<String, fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>> {
         &self.actions
     }
 }
@@ -43,7 +43,7 @@ mod tests {
 
         action_registry.register_action(
             "test_action",
-            create_test_action as fn(&JsonValue) -> Box<dyn Action>,
+            create_test_action as fn(&JsonValue, &JsonValue, &JsonValue) -> Box<dyn Action>,
         );
 
         let actions = action_registry.get_actions();
@@ -51,7 +51,7 @@ mod tests {
         assert_eq!(actions.len(), 1);
     }
 
-    fn create_test_action(config: &JsonValue) -> Box<dyn Action> {
+    fn create_test_action(config: &JsonValue, input_vars: &JsonValue, output_vars: &JsonValue) -> Box<dyn Action> {
         Box::new(TestAction::new(config))
     }
 
