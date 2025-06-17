@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use core_flow::{
     flow::conversation::Message,
-    graph::{action::action::Action, node::node_context::{NodeContext, Value}},
+    graph::{
+        action::{action::Action, utils::vars_parser::OutputVarsBuilder},
+        node::node_context::{NodeContext, Value},
+    },
 };
 use rig::{
     client::{CompletionClient, ProviderClient},
@@ -10,19 +13,29 @@ use rig::{
 };
 use serde_json::Value as JsonValue;
 
-use crate::ai_action::message_adapter::{rig_message_adapter};
+use crate::ai_action::message_adapter::rig_message_adapter;
 
+#[derive(Clone)]
 pub struct AIAction {
     // Add any configuration fields needed for the AI action
     model: String,
     system_prompt: String,
+    output_vars: JsonValue,
+    config: JsonValue,
 }
 
 impl AIAction {
-    pub fn new(model: String, system_prompt: String) -> Self {
+    pub fn new(
+        model: String,
+        system_prompt: String,
+        output_vars: JsonValue,
+        config: JsonValue,
+    ) -> Self {
         AIAction {
             model,
             system_prompt,
+            output_vars,
+            config,
         }
     }
 
@@ -34,56 +47,66 @@ impl AIAction {
 
         let gpt4 = openai_client.agent(&self.model).build();
 
-        let messages = messages.iter().map(|m| rig_message_adapter(m.clone())).collect::<Vec<rig::completion::Message>>();
+        let messages = messages
+            .iter()
+            .map(|m| rig_message_adapter(m.clone()))
+            .collect::<Vec<rig::completion::Message>>();
 
-        let response = gpt4
-            .chat(&self.system_prompt, messages)
-            .await?;
+        let response = gpt4.chat(&self.system_prompt, messages).await?;
 
         Ok(response)
     }
 
-    pub fn create_ai_action(config: &JsonValue, _: &JsonValue, _: &JsonValue) -> Box<dyn Action> {
+    pub fn create_ai_action(
+        config: &JsonValue,
+        _: &JsonValue,
+        output_vars: &JsonValue,
+    ) -> Box<dyn Action> {
         Box::new(AIAction::new(
             config["model"].as_str().unwrap().to_string(),
             config["system_prompt"].as_str().unwrap().to_string(),
+            output_vars.clone(),
+            config.clone(),
         ))
     }
 }
 
 #[async_trait]
 impl Action for AIAction {
-    async fn execute(&self, context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>> {
-        // Get messages from context
-        let messages = match context.variables.get("messages") {
-            Some(Value::Messages(msgs)) => msgs.clone(),
-            _ => Vec::new(), // Handle case where no messages exist
+    async fn execute(
+        &self,
+        context: &mut NodeContext,
+    ) -> Result<NodeContext, Box<dyn std::error::Error>> {
+        let mut messages_vec = match context.variables.remove("messages") {
+            Some(Value::Messages(msgs)) => msgs,
+            _ => Vec::new(),
         };
 
-        // Process messages through AI
-        let ai_response = self.process_messages(messages).await?;
+        let ai_response = self.process_messages(messages_vec.clone()).await?;
 
-        let messages = context.variables.get_mut("messages").unwrap();
+        let new_ai_message = Message::new("ai".to_string(), ai_response, "user".to_string());
 
-        if let Value::Messages(messages) = messages {
-            messages.push(Message::new("ai".to_string(), ai_response, "user".to_string()));
-        }
+        messages_vec.push(new_ai_message);
 
-        Ok(context.clone())
+        let mut output_builder = OutputVarsBuilder::new(&self.config, &self.output_vars, context.clone());
+
+        output_builder.add_var("messages".to_string(), Value::Messages(messages_vec.clone()));
+
+        let mut output_context = output_builder.build()?;
+        
+        output_context.variables.insert("messages".to_string(), Value::Messages(messages_vec));
+
+        Ok(output_context)
     }
 
     fn clone_box(&self) -> Box<dyn Action> {
-        Box::new(AIAction {
-            model: self.model.clone(),
-            system_prompt: self.system_prompt.clone(),
-        })
-
+        Box::new(self.clone())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use core_flow::graph::node::node_context::Value;
+    use serde_json::json;
 
     use super::*;
 
@@ -103,6 +126,11 @@ mod tests {
         let ai_action = AIAction::new(
             "gpt-3.5-turbo".to_string(),
             "You are a helpful assistant".to_string(),
+            json!(["messages"]),
+            json!({
+                "id": "ai_action",
+                "name": "AI Action",
+            }),
         );
 
         let result = ai_action.execute(&mut context).await;
