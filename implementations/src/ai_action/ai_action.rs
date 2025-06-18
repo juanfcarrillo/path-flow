@@ -7,9 +7,9 @@ use core_flow::{
     },
 };
 use rig::{
-    client::{CompletionClient, ProviderClient},
+    client::{ProviderClient},
     completion::Chat,
-    providers::openai,
+    providers::{gemini, openai},
 };
 use serde_json::Value as JsonValue;
 
@@ -43,9 +43,11 @@ impl AIAction {
         &self,
         messages: Vec<Message>,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let openai_client = openai::Client::from_env();
+        // let openai_client = openai::Client::from_env();
+        // let gpt4 = openai_client.agent(&self.model).build();
 
-        let gpt4 = openai_client.agent(&self.model).build();
+        let gemini_client = gemini::Client::from_env();
+        let gpt4 = gemini_client.agent("gemini-2.0-flash").build();
 
         let messages = messages
             .iter()
