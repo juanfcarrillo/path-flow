@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde_json::{Value as JsonValue, json};
 
 #[derive(Clone)]
-struct SendMessage {
+pub struct SendMessage {
     post_endpoint: String,
     input_vars: JsonValue,
     client: Client,

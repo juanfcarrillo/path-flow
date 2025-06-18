@@ -6,7 +6,7 @@ use crate::graph::{node::node_context::NodeContext};
 
 
 #[async_trait]
-pub trait Action {
+pub trait Action: Send + Sync {
     async fn execute(&self, context: &mut NodeContext) -> Result<NodeContext, Box<dyn std::error::Error>>;
     fn clone_box(&self) -> Box<dyn Action>;
 }

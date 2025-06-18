@@ -13,4 +13,4 @@ implementations = { path = "./implementations" }
 tokio = {version = "1.45.1", features = ["full"]}
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-axum = "0.8.4"
+axum = {version = "0.8.4", features = ["json", "macros", "tokio", "multipart", "original-uri"]}

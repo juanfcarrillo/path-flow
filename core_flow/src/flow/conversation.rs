@@ -71,7 +71,7 @@ impl Conversation {
     }
 }
 
-pub trait ConversationRepository {
+pub trait ConversationRepository : Send + Sync {
     fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Box<dyn std::error::Error>>;
     fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
     fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;

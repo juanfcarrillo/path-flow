@@ -9,7 +9,7 @@ use serde::de::Error as SerdeError;
 
 // Trait for condition evaluation
 #[async_trait]
-pub trait Condition<Context> {
+pub trait Condition<Context>: Send + Sync {
     async fn evaluate(&self, context: &Context) -> bool;
     fn clone_box(&self) -> Box<dyn Condition<Context>>;
 }

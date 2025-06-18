@@ -1,12 +1,50 @@
+
+use axum::{
+    extract::{Json, Path}, routing::post, Router
+};
 use core_flow::{
     flow::{
         conversation::{Conversation, ConversationRepository, Message},
-        flow_manager::FlowManager,
+        flow_manager::{FlowManager},
     },
-    graph::{action::{action_registry::ActionRegistry}, edge::condition_registry::ConditionRegistry, flow_graph::flow_graph::FlowGraph},
+    graph::{
+        action::action_registry::ActionRegistry, edge::condition_registry::ConditionRegistry,
+        flow_graph::flow_graph::FlowGraph, node::node_context::Value,
+    },
 };
-use implementations::ai_action::ai_action::AIAction;
-use std::collections::HashMap;
+use implementations::{ai_action::ai_action::AIAction, send_message::send_message::SendMessage};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, sync::Arc};
+use tokio::sync::Mutex;
+
+// Request/Response structs
+#[derive(Deserialize)]
+struct CreateConversationRequest {
+    conversation_id: String,
+    initial_node: String,
+}
+
+#[derive(Deserialize)]
+struct SendMessageRequest {
+    content: String,
+    sender: String,
+    recipient: String,
+}
+
+#[derive(Serialize)]
+struct ConversationResponse {
+    context: HashMap<String, Value>,
+}
+
+#[derive(Serialize)]
+struct CreateConversationResponse {
+    conversation_id: String,
+}
+
+struct AppState {
+    flow_manager: FlowManager,
+    memory_conversation_repository: MemoryConversationRepository,
+}
 
 struct MemoryConversationRepository {
     conversations: HashMap<String, Conversation>,
@@ -56,18 +94,15 @@ impl ConversationRepository for MemoryConversationRepository {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut conversation_repository = MemoryConversationRepository::new();
+    let mut action_registry = ActionRegistry::new();
+    let condition_registry = ConditionRegistry::new();
+    action_registry.register_action("ai_action", AIAction::create_ai_action);
+    action_registry.register_action("send_message", SendMessage::create_send_message);
 
     conversation_repository.save_conversation(Conversation::new(
-        "conversation_1".to_string(),
+        "12123".to_string(),
         "first_node".to_string(),
     ))?;
-
-    let mut action_registry = ActionRegistry::new();
-    action_registry.register_action(
-        "ai_action",
-        AIAction::create_ai_action,
-    );
-    let condition_registry = ConditionRegistry::new();
 
     let json_graph = r#"
         {
@@ -91,7 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
-                            "output_vars": {}
+                            "output_vars": ["messages"]
                         }
                     ]
                 },
@@ -114,7 +149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
-                            "output_vars": []
+                            "output_vars": ["messages"]
                         }
                     ]
                 },
@@ -137,7 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
-                            "output_vars": []
+                            "output_vars": ["messages"]
                         }
                     ]
                 }
@@ -166,34 +201,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ]
         }"#;
 
-    let flow_graph =
-        FlowGraph::from_json(json_graph, &action_registry, &condition_registry).unwrap();
+    let flow_graph = FlowGraph::from_json(json_graph, &action_registry, &condition_registry)?;
+    let flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
+    let shared_state = Arc::new(Mutex::new(AppState { flow_manager, memory_conversation_repository: MemoryConversationRepository::new() }));
 
-    let mut flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
+    let app = Router::new()
+        .route("/conversations", post(create_conversation))
+        .route("/conversations/{id}/messages", post(send_message))
+        .with_state(shared_state);
 
-    flow_manager
-        .trigger_conversation(
-            "conversation_1".to_string(),
-            Message::new(
-                "juan".to_string(),
-                "Whats the capital of Ecuador ?".to_string(),
-                "user".to_string(),
-            ),
-        )
-        .await?;
-
-    let context2 = flow_manager
-        .trigger_conversation(
-            "conversation_1".to_string(),
-            Message::new(
-                "juan".to_string(),
-                "Ok so what was the first question ?".to_string(),
-                "user".to_string(),
-            ),
-        )
-        .await?;
-
-    println!("Context: {:?}", context2);
+    println!("Server starting on http://localhost:3000");
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
     Ok(())
+}
+
+async fn create_conversation(
+    state: axum::extract::State<Arc<Mutex<AppState>>>,
+    Json(payload): Json<CreateConversationRequest>,
+) -> Json<CreateConversationResponse> {
+    let mut state = state.lock().await;
+    let conversation = Conversation::new(payload.conversation_id.clone(), payload.initial_node);
+    
+    match state.memory_conversation_repository.save_conversation(conversation.clone()) {
+        Ok(_) => Json(CreateConversationResponse {
+            conversation_id: conversation.id,
+        }),
+        Err(_) => Json(CreateConversationResponse {
+            conversation_id: "".to_string(),
+        }),
+    } 
+}
+
+async fn send_message(
+    state: axum::extract::State<Arc<Mutex<AppState>>>,
+    Path(conversation_id): Path<String>,
+    Json(payload): Json<SendMessageRequest>,
+) -> Json<ConversationResponse> {
+    let mut state = state.lock().await;
+
+    let message = Message::new(payload.sender, payload.content, payload.recipient);
+
+    let result = state.flow_manager.trigger_conversation(conversation_id, message.clone()).await;
+    println!("state: {:?}", result);
+
+    // Trigger conversation through flow manager
+    match result {
+        Ok(context) => Json(ConversationResponse {
+            context: context.variables,
+        }),
+        Err(_) => Json(ConversationResponse {
+            context: HashMap::new(),
+        }),
+    }
 }
