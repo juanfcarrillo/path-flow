@@ -210,8 +210,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/conversations/{id}/messages", post(send_message))
         .with_state(shared_state);
 
-    println!("Server starting on http://localhost:3000");
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    println!("Server starting on http://localhost:8000");
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
