@@ -122,7 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "config": {
                                 "id": "ai_action",
                                 "name": "AI Action",
-                                "model": "gpt-4o-mini",
+                                "model": "gemini-2.0-flash",
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
@@ -145,7 +145,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "config": {
                                 "id": "ai_action",
                                 "name": "AI Action",
-                                "model": "gpt-4o-mini",
+                                "model": "gemini-2.0-flash",
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
@@ -168,7 +168,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "config": {
                                 "id": "ai_action",
                                 "name": "AI Action",
-                                "model": "gpt-4o-mini",
+                                "model": "gemini-2.0-flash",
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},

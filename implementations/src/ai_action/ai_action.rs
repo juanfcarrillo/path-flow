@@ -9,7 +9,7 @@ use core_flow::{
 use rig::{
     client::{ProviderClient},
     completion::Chat,
-    providers::{gemini, openai},
+    providers::{gemini},
 };
 use serde_json::Value as JsonValue;
 
@@ -47,7 +47,7 @@ impl AIAction {
         // let gpt4 = openai_client.agent(&self.model).build();
 
         let gemini_client = gemini::Client::from_env();
-        let gpt4 = gemini_client.agent("gemini-2.0-flash").build();
+        let gpt4 = gemini_client.agent(&self.model).build();
 
         let messages = messages
             .iter()

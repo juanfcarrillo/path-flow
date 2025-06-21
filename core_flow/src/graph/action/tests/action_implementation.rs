@@ -3,6 +3,7 @@ use serde_json::Value as JsonValue;
 
 #[derive(Clone)]
 pub struct TestAction {
+    #[allow(dead_code)]
     config: JsonValue,
 }
 

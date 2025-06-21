@@ -7,6 +7,7 @@ use crate::graph::action::{action::Action, action_registry::ActionRegistry};
 enum DeserializeActionError {
     MissingName,
     MissingId,
+    #[allow(dead_code)]
     MissingActionType,
     MissingConfig,
     MissingInputVars,
