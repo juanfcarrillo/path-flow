@@ -1,5 +1,5 @@
-use super::{edge::Edge, condition::Condition};
-use crate::graph::node::node_context::NodeContext;
+use super::{edge::Edge};
+use crate::graph::{condition::condition::Condition, node::node_context::NodeContext};
 
 pub struct EdgeBuilder {
     id: String,

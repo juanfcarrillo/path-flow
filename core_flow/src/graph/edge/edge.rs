@@ -2,9 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::graph::{edge::{condition::{deserialize_conditions_with_config}, condition_registry::ConditionRegistry}, node::node_context::NodeContext};
+use crate::graph::{condition::{condition::{deserialize_conditions_with_config, Condition}, condition_registry::ConditionRegistry}, edge::edge_builder::EdgeBuilder, node::node_context::NodeContext};
 
-use super::{condition::Condition, edge_builder::EdgeBuilder};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Edge {
@@ -69,7 +68,8 @@ mod tests {
     use super::*;
 
     mod given_some_conditions {
-        use crate::graph::edge::tests::condition_implementation::{NegativeCondition, PositiveCondition};
+
+        use crate::graph::condition::tests::condition_implementation::{NegativeCondition, PositiveCondition};
 
         use super::*;
 
@@ -106,7 +106,8 @@ mod tests {
 
     mod given_json {
 
-        use crate::graph::edge::tests::condition_implementation::{NegativeCondition, PositiveCondition};
+
+        use crate::graph::condition::tests::condition_implementation::{NegativeCondition, PositiveCondition};
 
         use super::*;
 

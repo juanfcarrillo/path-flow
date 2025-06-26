@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 
 use async_trait::async_trait;
 
-use crate::graph::{edge::condition_registry::ConditionRegistry, node::node_context::NodeContext};
+use crate::graph::{condition::condition_registry::ConditionRegistry, node::node_context::NodeContext};
 use serde::de::Error as SerdeError;
 
 // Trait for condition evaluation
@@ -55,9 +55,7 @@ pub fn deserialize_conditions_with_config(
 
 #[cfg(test)]
 mod tests {
-    use crate::graph::edge::tests::condition_implementation::{
-        ConfigurableCondition, NegativeCondition, PositiveCondition,
-    };
+    use crate::graph::condition::tests::condition_implementation::{ConfigurableCondition, NegativeCondition, PositiveCondition};
 
     use super::*;
 

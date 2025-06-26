@@ -1,8 +1,7 @@
 // core_flow/src/graph/edge/condition_registry.rs
 
 use std::collections::HashMap;
-use crate::graph::edge::condition::Condition;
-use crate::graph::node::node_context::NodeContext;
+use crate::graph::{condition::condition::Condition, node::node_context::NodeContext};
 use serde_json::Value as JsonValue;
 
 pub struct ConditionRegistry {
@@ -33,10 +32,9 @@ impl ConditionRegistry {
 
 #[cfg(test)]
 mod tests {
+    use crate::graph::condition::tests::condition_implementation::{NegativeCondition, PositiveCondition};
+
     use super::*;
-    use crate::graph::edge::tests::condition_implementation::{
-        PositiveCondition, NegativeCondition,
-    };
 
     fn create_positive_condition(_config: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(PositiveCondition {})

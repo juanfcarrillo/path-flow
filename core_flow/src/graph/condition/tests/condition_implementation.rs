@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-
-use crate::graph::{edge::condition::Condition, node::node_context::NodeContext};
+use crate::graph::{condition::condition::Condition, node::node_context::NodeContext};
 
 pub struct PositiveCondition;
 
