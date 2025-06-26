@@ -4,7 +4,7 @@ use std::fmt;
 use serde_json::Value;
 
 use crate::graph::action::action_registry::ActionRegistry;
-use crate::graph::edge::condition_registry::ConditionRegistry;
+use crate::graph::condition::condition_registry::ConditionRegistry;
 use crate::graph::flow_graph::flow_graph_builder::FlowGraphBuilder;
 use crate::graph::{
     edge::edge::Edge,
@@ -285,10 +285,8 @@ mod tests {
     }
 
     mod given_some_conditions {
-        use crate::graph::edge::{
-            condition::Condition,
-            tests::condition_implementation::{NegativeCondition, PositiveCondition},
-        };
+
+        use crate::graph::condition::tests::condition_implementation::{NegativeCondition, PositiveCondition};
 
         use super::*;
 
@@ -386,9 +384,10 @@ mod tests {
     }
 
     mod given_json {
-        use crate::graph::{action::tests::action_implementation::create_test_action, edge::{condition::Condition, tests::condition_implementation::PositiveCondition}};
         use serde_json::Value as JsonValue;
         
+        use crate::graph::{action::tests::action_implementation::create_test_action, condition::{condition::Condition, tests::condition_implementation::PositiveCondition}};
+
         use super::*;
 
         fn create_positive_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
