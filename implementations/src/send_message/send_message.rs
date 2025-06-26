@@ -1,10 +1,11 @@
 use async_trait::async_trait;
-use core_flow::graph::{
+use core_flow::{graph::{
     action::{action::Action, utils::vars_parser::parse_input_vars},
     node::node_context::{NodeContext, Value},
-};
-use reqwest::Client;
+}};
+use reqwest::{header, Client};
 use serde_json::{Value as JsonValue, json};
+use std::time::Duration;
 
 #[derive(Clone)]
 pub struct SendMessage {
@@ -19,10 +20,24 @@ impl SendMessage {
         input_vars: &JsonValue,
         _: &JsonValue,
     ) -> Box<dyn Action> {
+        let endpoint = config["post_endpoint"].as_str().unwrap().to_string();
+        
+        // Validate endpoint URL
+        if endpoint.is_empty() {
+            panic!("post_endpoint cannot be empty");
+        }
+        
+        // Create HTTP client with timeout
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(10))
+            .build()
+            .expect("Failed to create HTTP client");
+            
         Box::new(SendMessage {
-            post_endpoint: config["post_endpoint"].as_str().unwrap().to_string(),
+            post_endpoint: endpoint,
             input_vars: input_vars.clone(),
-            client: Client::new(),
+            client,
         })
     }
 }
@@ -38,31 +53,70 @@ impl Action for SendMessage {
 
         if let Some(Value::Messages(messages)) = messages {
             let endpoint = self.post_endpoint.clone();
+            println!("Configured endpoint: {}", endpoint);
 
             for message in messages {
+                println!("Sending message to endpoint: {}", endpoint);
                 // Post message to endpoint using http client
                 let response = self
                     .client
                     .post(&endpoint)
                     .json(&json!({
-                        "message": message
+                        "message": message,
                     }))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "*/*")
+                    .header(header::USER_AGENT, "core-flow/1.0")
                     .send()
                     .await;
 
-                if let Ok(response) = response {
-                    let status = response.status();
-                    let text = response.text().await.unwrap();
-                    println!("Status: {:?}", status);
-                    println!("Text: {:?}", text);
-                } else {
-                    println!("Error: {:?}", response);
-                    return Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Failed to send message",
-                    )));
+                match response {
+                    Ok(response) => {
+                        let status = response.status();
+                        println!("Response status: {}", status);
+                        
+                        if status.is_success() {
+                            match response.text().await {
+                                Ok(text) => println!("Response text: {}", text),
+                                Err(e) => println!("Warning: Failed to read response body: {}", e),
+                            }
+                        } else {
+                            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+                            println!("HTTP error {}: {}", status, error_text);
+                            return Err(Box::new(std::io::Error::new(
+                                std::io::ErrorKind::Other,
+                                format!("HTTP request failed with status {}: {}", status, error_text),
+                            )));
+                        }
+                    }
+                    Err(e) => {
+                        println!("Failed to send message to endpoint: {}", endpoint);
+                        println!("Error: {:?}", e);
+                        
+                        // Provide more specific error messages based on error type
+                        let error_message = if e.is_connect() {
+                            format!("Connection failed to {}: {}", endpoint, e)
+                        } else if e.is_timeout() {
+                            format!("Request timeout to {}: {}", endpoint, e)
+                        } else if e.is_request() {
+                            format!("Request error to {}: {}", endpoint, e)
+                        } else {
+                            format!("Network error to {}: {}", endpoint, e)
+                        };
+                        
+                        println!("Error: {}", error_message);
+                        return Err(Box::new(std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            error_message,
+                        )));
+                    }
                 }
             }
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Messages not found in input variables",
+            )));
         }
 
         Ok(context.clone())
@@ -153,8 +207,6 @@ mod tests {
 
         // Execute action
         let result = action.execute(&mut context).await;
-
-        println!("Result: {:?}", result);
 
         assert!(result.is_err());
     }
