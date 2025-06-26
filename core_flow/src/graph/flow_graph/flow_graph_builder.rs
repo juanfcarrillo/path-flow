@@ -50,8 +50,7 @@ mod tests {
 
     use super::*;
     use crate::graph::{
-        edge::condition::Condition,
-        node::node_context::NodeContext,
+        condition::condition::Condition, node::node_context::NodeContext
     };
 
     // Test condition implementation
