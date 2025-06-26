@@ -384,7 +384,7 @@ mod tests {
     }
 
     mod given_json {
-        use crate::graph::{action::tests::action_implementation::create_test_action, condition::{condition::Condition, tests::condition_implementation::PositiveCondition}};
+        use crate::graph::{action::tests::action_implementation::create_test_action, condition::{tests::condition_implementation::PositiveCondition}};
 
         use super::*;
 
@@ -440,7 +440,8 @@ mod tests {
                         "target_node_id": "node2",
                         "conditions": [
                             {
-                                "condition_type": "positive_condition"
+                                "condition_type": "positive_condition",
+                                "input_vars": {}
                             }
                         ]
                     }

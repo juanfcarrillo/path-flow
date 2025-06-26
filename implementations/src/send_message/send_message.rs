@@ -56,7 +56,7 @@ impl Action for SendMessage {
             println!("Configured endpoint: {}", endpoint);
 
             for message in messages {
-                println!("Sending message to endpoint: {}", endpoint);
+                println!("Sending message to endpoint: {:?}", message);
                 // Post message to endpoint using http client
                 let response = self
                     .client

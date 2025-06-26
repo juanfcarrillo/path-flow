@@ -5,11 +5,10 @@ use axum::{
 use core_flow::{
     flow::{
         conversation::{Conversation, ConversationRepository, Message},
-        flow_manager::{FlowManager},
+        flow_manager::FlowManager,
     },
     graph::{
-        action::action_registry::ActionRegistry, edge::condition_registry::ConditionRegistry,
-        flow_graph::flow_graph::FlowGraph, node::node_context::Value,
+        action::action_registry::ActionRegistry, condition::condition_registry::ConditionRegistry, flow_graph::flow_graph::FlowGraph, node::node_context::Value
     },
 };
 use implementations::{ai_action::ai_action::AIAction, send_message::send_message::SendMessage};
@@ -121,12 +120,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "action_type": "ai_action",
                             "config": {
                                 "id": "ai_action",
-                                "name": "AI Action",
+                                "name": "ai_action",
                                 "model": "gemini-2.0-flash",
-                                "system_prompt": "Dont answer the question, just reply mheee"
+                                "system_prompt": "Repond with hola"
                             },
                             "input_vars": {},
                             "output_vars": ["messages"]
+                        },
+                        {
+                            "name": "send_message",
+                            "action_type": "send_message",
+                            "config": {
+                                "id": "send_message",
+                                "name": "Send Message",
+                                "post_endpoint": "http://localhost:3000/webhook/send"
+                            },
+                            "input_vars": {
+                                "messages": "ai_action.messages"
+                            },
+                            "output_vars": []
                         }
                     ]
                 },
@@ -184,7 +196,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "target_node_id": "second_node",
                     "conditions": [
                         {
-                            "condition_type": "positive_condition"
+                            "condition_type": "positive_condition",
+                            "input_vars": {}
                         }
                     ]
                 },
@@ -194,7 +207,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "target_node_id": "third_node",
                     "conditions": [
                         {
-                            "condition_type": "negative_condition"
+                            "condition_type": "negative_condition",
+                            "input_vars": {}
+                        }
+                    ]
+                },
+                {
+                    "id": "third_node_to_first_node",
+                    "source_node_id": "third_node",
+                    "target_node_id": "first_node",
+                    "conditions": [
+                        {
+                            "condition_type": "positive_condition",
+                            "input_vars": {}
                         }
                     ]
                 }
@@ -244,7 +269,7 @@ async fn send_message(
     let message = Message::new(payload.sender, payload.content, payload.recipient);
 
     let result = state.flow_manager.trigger_conversation(conversation_id, message.clone()).await;
-    println!("state: {:?}", result);
+    // println!("state: {:?}", result);
 
     // Trigger conversation through flow manager
     match result {
