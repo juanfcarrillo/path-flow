@@ -6,11 +6,7 @@ use core_flow::{
         node::node_context::{NodeContext, Value},
     },
 };
-use rig::{
-    client::{ProviderClient},
-    completion::Chat,
-    providers::{gemini},
-};
+use rig::{client::ProviderClient, completion::Chat, providers::gemini};
 use serde_json::Value as JsonValue;
 
 use crate::ai_action::message_adapter::rig_message_adapter;
@@ -86,17 +82,36 @@ impl Action for AIAction {
 
         let ai_response = self.process_messages(messages_vec.clone()).await?;
 
-        let new_ai_message = Message::new("ai".to_string(), ai_response, "user".to_string());
+        let trigger_message: Option<&Value> = context.variables.get("trigger_message");
 
-        messages_vec.push(new_ai_message);
+        if trigger_message.is_none() {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Trigger message not found in context",
+            )));
+        }
 
-        let mut output_builder = OutputVarsBuilder::new(&self.config, &self.output_vars, context.clone());
+        let recipient = trigger_message.unwrap().as_messages().unwrap()[0]
+            .recipient
+            .clone();
 
-        output_builder.add_var("messages".to_string(), Value::Messages(messages_vec.clone()));
+        let new_ai_message = Message::new("ai".to_string(), ai_response, recipient);
+
+        messages_vec.push(new_ai_message.clone());
+
+        let mut output_builder =
+            OutputVarsBuilder::new(&self.config, &self.output_vars, context.clone());
+
+        output_builder.add_var(
+            "messages".to_string(),
+            Value::Messages(vec![new_ai_message]),
+        );
 
         let mut output_context = output_builder.build()?;
-        
-        output_context.variables.insert("messages".to_string(), Value::Messages(messages_vec));
+
+        output_context
+            .variables
+            .insert("messages".to_string(), Value::Messages(messages_vec));
 
         Ok(output_context)
     }

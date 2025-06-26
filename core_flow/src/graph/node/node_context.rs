@@ -15,6 +15,16 @@ pub enum Value {
     Messages(Vec<Message>)
 }
 
+impl Value {
+    pub fn as_messages(&self) -> Option<&Vec<Message>> {
+        if let Value::Messages(messages) = self {
+            Some(messages)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeContext {
     pub variables: HashMap<String, Value>,
