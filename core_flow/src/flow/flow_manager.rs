@@ -41,9 +41,10 @@ impl FlowManager {
 
         let current_node = self.flow_graph.get_node_mut(&current_node_id)?;
 
-        let messages = [conversation.get_messages(), vec![new_message]].concat();
+        let messages = [conversation.get_messages(), vec![new_message.clone()]].concat();
 
         current_node.set_var_context("messages".to_string(), Value::Messages(messages)); 
+        current_node.set_var_context("trigger_message".to_string(), Value::Messages(vec![new_message]));
 
         current_node.execute_actions().await?;
 

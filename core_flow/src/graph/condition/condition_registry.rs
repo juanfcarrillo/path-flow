@@ -5,7 +5,7 @@ use crate::graph::{condition::condition::Condition, node::node_context::NodeCont
 use serde_json::Value as JsonValue;
 
 pub struct ConditionRegistry {
-    conditions: HashMap<String, fn(&JsonValue) -> Box<dyn Condition<NodeContext>>>,
+    conditions: HashMap<String, fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>>,
 }
 
 impl ConditionRegistry {
@@ -18,14 +18,14 @@ impl ConditionRegistry {
     pub fn register_condition(
         &mut self,
         condition_type: &str,
-        condition_constructor: fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+        condition_constructor: fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>,
     ) -> &mut Self {
         self.conditions
             .insert(condition_type.to_string(), condition_constructor);
         self
     }
 
-    pub fn get_conditions(&self) -> &HashMap<String, fn(&JsonValue) -> Box<dyn Condition<NodeContext>>> {
+    pub fn get_conditions(&self) -> &HashMap<String, fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>> {
         &self.conditions
     }
 }
@@ -36,11 +36,11 @@ mod tests {
 
     use super::*;
 
-    fn create_positive_condition(_config: &JsonValue) -> Box<dyn Condition<NodeContext>> {
+    fn create_positive_condition(_config: &JsonValue, _input_vars: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(PositiveCondition {})
     }
 
-    fn create_negative_condition(_config: &JsonValue) -> Box<dyn Condition<NodeContext>> {
+    fn create_negative_condition(_config: &JsonValue, _input_vars: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(NegativeCondition {})
     }
 
@@ -50,12 +50,12 @@ mod tests {
 
         condition_registry.register_condition(
             "positive_condition",
-            create_positive_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+            create_positive_condition as fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>,
         );
 
         condition_registry.register_condition(
             "negative_condition",
-            create_negative_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+            create_negative_condition as fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>,
         );
 
         let conditions = condition_registry.get_conditions();

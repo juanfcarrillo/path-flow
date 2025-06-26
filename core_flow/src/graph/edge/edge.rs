@@ -111,14 +111,6 @@ mod tests {
 
         use super::*;
 
-        fn create_positive_condition(_: &serde_json::Value) -> Box<dyn Condition<NodeContext>> {
-            Box::new(PositiveCondition {})
-        }
-
-        fn create_negative_condition(_: &serde_json::Value) -> Box<dyn Condition<NodeContext>> {
-            Box::new(NegativeCondition {})
-        }
-
         #[test]
         fn test_from_json() {
             let json = r#"{
@@ -138,11 +130,11 @@ mod tests {
             let mut condition_registry = ConditionRegistry::new();
             condition_registry.register_condition(
                 "positive_condition",
-                create_positive_condition as fn(&serde_json::Value) -> Box<dyn Condition<NodeContext>>,
+                PositiveCondition::create_positive_condition,
             );
             condition_registry.register_condition(
                 "negative_condition",
-                create_negative_condition as fn(&serde_json::Value) -> Box<dyn Condition<NodeContext>>,
+                NegativeCondition::create_negative_condition,
             );
 
             let edge = Edge::from_json(json, &condition_registry).unwrap();

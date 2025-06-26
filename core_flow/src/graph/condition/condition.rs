@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 
 use async_trait::async_trait;
 
-use crate::graph::{condition::condition_registry::ConditionRegistry, node::node_context::NodeContext};
+use crate::graph::{action::utils::action_deserializer::deserialize_input_vars, condition::condition_registry::ConditionRegistry, node::node_context::NodeContext};
 use serde::de::Error as SerdeError;
 
 // Trait for condition evaluation
@@ -37,10 +37,11 @@ pub fn deserialize_conditions_with_config(
         if let Some(condition_type) = condition_data.get("condition_type").and_then(|v| v.as_str()) {
             if let Some(condition_constructor) = condition_registry.get_conditions().get(condition_type) {
                 let config = condition_data.get("config");
+                let input_vars = deserialize_input_vars(condition_data.get("input_vars").cloned())?; 
                 if config.is_some() {
-                    conditions.push(condition_constructor(config.unwrap()));
+                    conditions.push(condition_constructor(config.unwrap(), &input_vars));
                 } else {
-                    conditions.push(condition_constructor(&JsonValue::Null));
+                    conditions.push(condition_constructor(&JsonValue::Null, &input_vars));
                 }
             } else {
                 return Err(SerdeError::custom(format!(
@@ -59,15 +60,15 @@ mod tests {
 
     use super::*;
 
-    fn create_positive_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
+    fn create_positive_condition(_: &JsonValue, _: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(PositiveCondition {})
     }
 
-    fn create_negative_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
+    fn create_negative_condition(_: &JsonValue, _: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(NegativeCondition {})
     }
 
-    fn create_configurable_condition(config: &JsonValue) -> Box<dyn Condition<NodeContext>> {
+    fn create_configurable_condition(config: &JsonValue, _: &JsonValue) -> Box<dyn Condition<NodeContext>> {
         Box::new(ConfigurableCondition::new(config))
     }
 
@@ -86,11 +87,11 @@ mod tests {
         let mut condition_registry = ConditionRegistry::new();
         condition_registry.register_condition(
             "positive_condition",
-            create_positive_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+            create_positive_condition as fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>,
         );
         condition_registry.register_condition(
             "negative_condition",
-            create_negative_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+            create_negative_condition as fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>,
         );
 
         let conditions = deserialize_conditions_with_config(json, &condition_registry).unwrap();
@@ -112,7 +113,7 @@ mod tests {
         let mut condition_registry = ConditionRegistry::new();
         condition_registry.register_condition(
             "configurable_condition",
-            create_configurable_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+            create_configurable_condition as fn(&JsonValue, &JsonValue) -> Box<dyn Condition<NodeContext>>,
         );
 
         let conditions = deserialize_conditions_with_config(json, &condition_registry).unwrap();

@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 use crate::graph::action::{action::Action, action_registry::ActionRegistry};
 
 #[derive(Debug)]
-enum DeserializeActionError {
+pub enum DeserializeActionError {
     MissingName,
     MissingId,
     #[allow(dead_code)]
@@ -62,7 +62,7 @@ fn deserialize_config(config: Option<JsonValue>) -> Result<JsonValue, Deserializ
     }
 }
 
-fn deserialize_input_vars(input_vars: Option<JsonValue>) -> Result<JsonValue, DeserializeActionError> {
+pub fn deserialize_input_vars(input_vars: Option<JsonValue>) -> Result<JsonValue, DeserializeActionError> {
     match input_vars {
         Some(input_vars) => {
             Ok(input_vars)

@@ -13,6 +13,12 @@ impl Condition<NodeContext> for PositiveCondition {
     }
 }
 
+impl PositiveCondition {
+    pub fn create_positive_condition(_: &serde_json::Value, _input_vars: &serde_json::Value) -> Box<dyn Condition<NodeContext>> {
+        Box::new(PositiveCondition)
+    }
+}
+
 pub struct NegativeCondition;
 
 #[async_trait]
@@ -21,6 +27,12 @@ impl Condition<NodeContext> for NegativeCondition {
         false
     }
     fn clone_box(&self) -> Box<dyn Condition<NodeContext>> {
+        Box::new(NegativeCondition)
+    }
+}
+
+impl NegativeCondition {
+    pub fn create_negative_condition(_: &serde_json::Value, _input_vars: &serde_json::Value) -> Box<dyn Condition<NodeContext>> {
         Box::new(NegativeCondition)
     }
 }

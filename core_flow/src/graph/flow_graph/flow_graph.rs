@@ -384,15 +384,9 @@ mod tests {
     }
 
     mod given_json {
-        use serde_json::Value as JsonValue;
-        
         use crate::graph::{action::tests::action_implementation::create_test_action, condition::{condition::Condition, tests::condition_implementation::PositiveCondition}};
 
         use super::*;
-
-        fn create_positive_condition(_: &JsonValue) -> Box<dyn Condition<NodeContext>> {
-            Box::new(PositiveCondition {})
-        }
 
         #[test]
         fn test_from_json() {
@@ -462,7 +456,7 @@ mod tests {
             let mut condition_registry = ConditionRegistry::new();
             condition_registry.register_condition(
                 "positive_condition",
-                create_positive_condition as fn(&JsonValue) -> Box<dyn Condition<NodeContext>>,
+                PositiveCondition::create_positive_condition,
             );
 
             let graph = FlowGraph::from_json(json, &action_registry, &condition_registry).unwrap();
