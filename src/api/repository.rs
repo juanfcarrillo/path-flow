@@ -1,6 +1,8 @@
 use core_flow::flow::conversation::{Conversation, ConversationRepository};
 use std::collections::HashMap;
+use chrono::{Utc, DateTime};
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct MemoryConversationRepository {
     pub conversations: HashMap<String, Conversation>,
 }
@@ -44,4 +46,58 @@ impl ConversationRepository for MemoryConversationRepository {
             .insert(conversation.id.to_string(), conversation);
         Ok(())
     }
+
+    fn get_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error>> {
+        let result = self.conversations.values().find(|conversation| {
+            conversation.get_messages().iter().any(|msg| msg.recipient == recipient)
+        });
+        
+        match result {
+            Some(conversation) => Ok(conversation.clone()),
+            None => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Conversation not found",
+            ))),
+        }
+    }
+
+    fn get_conversation_by_sender(&self, sender: String) -> Result<Conversation, Box<dyn std::error::Error>> {
+        let result = self.conversations.values().find(|conversation| {
+            conversation.get_messages().iter().any(|msg| msg.sender == sender)
+        });
+        
+        match result {
+            Some(conversation) => Ok(conversation.clone()),
+            None => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Conversation not found",
+            ))),
+        }
+    }
+
+    fn get_last_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error>> {
+        let result = self.conversations.values().max_by_key(|conversation| {
+            let conv_messages = conversation.get_messages();
+            let messages = conv_messages.iter().filter(|msg| msg.recipient == recipient);
+            let last_message = messages.last();
+
+            if let Some(last_message) = last_message {
+                let timestamp: DateTime<Utc> = last_message.timestamp.parse().unwrap();
+
+                return timestamp.timestamp()
+            }
+
+            0
+        });
+        
+        match result {
+            Some(conversation) => Ok(conversation.clone()),
+            None => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Conversation not found",
+            ))),
+        }
+    }
+
+
 }

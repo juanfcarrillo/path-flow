@@ -162,6 +162,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/conversations", post(handlers::create_conversation))
         .route("/conversations/{id}/messages", post(handlers::send_message))
+        .route("/conversations/trigger", post(handlers::trigger_conversation))
         .with_state(shared_state);
 
     println!("Server starting on http://localhost:8000");

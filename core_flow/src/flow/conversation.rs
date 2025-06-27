@@ -17,7 +17,7 @@ pub struct Message {
     pub content: MessageType,
     pub sender: String,
     pub recipient: String,
-    timestamp: String,
+    pub timestamp: String,
 }
 
 impl Message {
@@ -73,6 +73,9 @@ impl Conversation {
 
 pub trait ConversationRepository : Send + Sync {
     fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Box<dyn std::error::Error>>;
+    fn get_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error>>;
+    fn get_conversation_by_sender(&self, sender: String) -> Result<Conversation, Box<dyn std::error::Error>>;
+    fn get_last_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error>>;
     fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
     fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
 }

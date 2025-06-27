@@ -16,10 +16,19 @@ pub struct SendMessageRequest {
     pub recipient: String,
 }
 
+#[derive(Deserialize)]
+pub struct TriggerConversationRequest {
+    pub content: String,
+    pub sender: String,
+    pub recipient: String
+}
+
 // Response structs
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ConversationResponse {
+    pub success: bool,
     pub context: HashMap<String, Value>,
+    pub error_message: Option<String>,
 }
 
 #[derive(Serialize)]
