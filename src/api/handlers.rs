@@ -28,11 +28,14 @@ async fn execute_conversation_flow(
             context: context.variables,
             error_message: None,
         }),
-        Err(e) => Json(ConversationResponse {
-            success: false,
-            context: HashMap::new(),
-            error_message: Some(format!("Failed to process conversation: {}", e)),
-        }),
+        Err(e) => {
+            println!("Error in trigger conversation: {}", e);
+            return Json(ConversationResponse {
+                success: false,
+                context: HashMap::new(),
+                error_message: Some(format!("Failed to process conversation: {}", e)),
+            });
+        }
     }
 }
 
@@ -45,7 +48,8 @@ pub async fn create_conversation(
 
     match state
         .mongo_conversation_repository
-        .save_conversation(conversation.clone()).await
+        .save_conversation(conversation.clone())
+        .await
     {
         Ok(_) => Json(CreateConversationResponse {
             conversation_id: conversation.id,
@@ -86,7 +90,8 @@ pub async fn trigger_conversation(
     // Try to get existing conversation or create a new one
     let conversation_id = match state
         .mongo_conversation_repository
-        .get_conversation_by_recipient(payload.sender.clone()).await
+        .get_conversation_by_recipient(payload.sender.clone())
+        .await
     {
         Ok(conversation) => conversation.id,
         Err(_) => {
@@ -96,7 +101,8 @@ pub async fn trigger_conversation(
 
             match state
                 .mongo_conversation_repository
-                .save_conversation(new_conversation.clone()).await
+                .save_conversation(new_conversation.clone())
+                .await
             {
                 Ok(_) => new_conversation.id,
                 Err(e) => {

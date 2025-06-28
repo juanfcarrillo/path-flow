@@ -9,6 +9,7 @@ pub struct MemoryConversationRepository {
 }
 
 impl MemoryConversationRepository {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         MemoryConversationRepository {
             conversations: HashMap::new(),
