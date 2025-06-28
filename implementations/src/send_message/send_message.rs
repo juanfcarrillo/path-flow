@@ -53,7 +53,6 @@ impl Action for SendMessage {
 
         if let Some(Value::Messages(messages)) = messages {
             let endpoint = self.post_endpoint.clone();
-            println!("Configured endpoint: {}", endpoint);
 
             for message in messages {
                 println!("Sending message to endpoint: {:?}", message);
@@ -73,16 +72,15 @@ impl Action for SendMessage {
                 match response {
                     Ok(response) => {
                         let status = response.status();
-                        println!("Response status: {}", status);
                         
                         if status.is_success() {
-                            match response.text().await {
-                                Ok(text) => println!("Response text: {}", text),
-                                Err(e) => println!("Warning: Failed to read response body: {}", e),
-                            }
+                            // match response.text().await {
+                            //     Ok(text) => println!("Response text: {}", text),
+                            //     Err(e) => println!("Warning: Failed to read response body: {}", e),
+                            // }
                         } else {
                             let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-                            println!("HTTP error {}: {}", status, error_text);
+
                             return Err(Box::new(std::io::Error::new(
                                 std::io::ErrorKind::Other,
                                 format!("HTTP request failed with status {}: {}", status, error_text),
@@ -90,8 +88,7 @@ impl Action for SendMessage {
                         }
                     }
                     Err(e) => {
-                        println!("Failed to send message to endpoint: {}", endpoint);
-                        println!("Error: {:?}", e);
+                        println!("Error in endpoint response: {:?}", e);
                         
                         // Provide more specific error messages based on error type
                         let error_message = if e.is_connect() {
@@ -104,7 +101,7 @@ impl Action for SendMessage {
                             format!("Network error to {}: {}", endpoint, e)
                         };
                         
-                        println!("Error: {}", error_message);
+                        println!("Error in endpoint request: {}", error_message);
                         return Err(Box::new(std::io::Error::new(
                             std::io::ErrorKind::Other,
                             error_message,
