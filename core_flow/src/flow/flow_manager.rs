@@ -53,7 +53,7 @@ impl FlowManager {
 
     pub async fn trigger_conversation(&mut self, conversation_id: String, new_message: Message) -> Result<NodeContext, FlowManagerError> {
         let mut conversation = self.conversation_repository
-            .get_conversation(conversation_id.clone())
+            .get_conversation(conversation_id.clone()).await
             .map_err(|_| FlowManagerError::ConversationNotFound(conversation_id.clone()))?;
         
         let current_node_id = conversation.get_current_node_id();
@@ -89,7 +89,7 @@ impl FlowManager {
         }
 
         self.conversation_repository
-            .update_conversation(conversation_id, conversation)
+            .update_conversation(conversation_id, conversation).await
             .map_err(|e| FlowManagerError::ConversationUpdateFailed(e))?;
 
         Ok(final_node_context.clone())

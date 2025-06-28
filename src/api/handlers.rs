@@ -45,7 +45,7 @@ pub async fn create_conversation(
 
     match state
         .memory_conversation_repository
-        .save_conversation(conversation.clone())
+        .save_conversation(conversation.clone()).await
     {
         Ok(_) => Json(CreateConversationResponse {
             conversation_id: conversation.id,
@@ -84,7 +84,7 @@ pub async fn trigger_conversation(
     // Try to get existing conversation or create a new one
     let conversation_id = match state
         .memory_conversation_repository
-        .get_conversation_by_recipient(payload.sender.clone())
+        .get_conversation_by_recipient(payload.sender.clone()).await
     {
         Ok(conversation) => conversation.id,
         Err(_) => {
@@ -94,7 +94,7 @@ pub async fn trigger_conversation(
 
             match state
                 .memory_conversation_repository
-                .save_conversation(new_conversation.clone())
+                .save_conversation(new_conversation.clone()).await
             {
                 Ok(_) => new_conversation.id,
                 Err(e) => {

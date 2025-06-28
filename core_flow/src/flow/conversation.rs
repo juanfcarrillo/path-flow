@@ -1,5 +1,6 @@
 use std::result::Result;
 
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::Utc;
@@ -29,6 +30,20 @@ impl Message {
             recipient,
             timestamp: Utc::now().to_rfc3339(),
         }
+    }
+
+    pub fn new_with_id(id: String, sender: String, content: MessageType, recipient: String, timestamp: String) -> Self {
+        Message {
+            id,
+            content,
+            sender,
+            recipient,
+            timestamp,
+        }
+    }
+
+    pub fn get_id(&self) -> String {
+        self.id.clone()
     }
 }
 
@@ -71,11 +86,12 @@ impl Conversation {
     }
 }
 
+#[async_trait]
 pub trait ConversationRepository : Send + Sync {
-    fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Box<dyn std::error::Error>>;
-    fn get_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error>>;
-    fn get_conversation_by_sender(&self, sender: String) -> Result<Conversation, Box<dyn std::error::Error>>;
-    fn get_last_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error>>;
-    fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
-    fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Box<dyn std::error::Error>>;
+    async fn get_conversation(&self, conversation_id: String) -> Result<Conversation, Box<dyn std::error::Error + Send + Sync>>;
+    async fn get_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error + Send + Sync>>;
+    async fn get_conversation_by_sender(&self, sender: String) -> Result<Conversation, Box<dyn std::error::Error + Send + Sync>>;
+    async fn get_last_conversation_by_recipient(&self, recipient: String) -> Result<Conversation, Box<dyn std::error::Error + Send + Sync>>;
+    async fn save_conversation(&mut self, conversation: Conversation) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn update_conversation(&mut self, conversation_id: String, conversation: Conversation) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }

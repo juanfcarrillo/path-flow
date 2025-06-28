@@ -20,7 +20,7 @@ use tokio::sync::Mutex;
 use api::{handlers, AppState, MemoryConversationRepository};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut conversation_repository = MemoryConversationRepository::new();
     let mut action_registry = ActionRegistry::new();
     let condition_registry = ConditionRegistry::new();
@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     conversation_repository.save_conversation(Conversation::new(
         "12123".to_string(),
         "first_node".to_string(),
-    ))?;
+    )).await.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e })?;
 
     let json_graph = r#"
         {
@@ -155,7 +155,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ]
         }"#;
 
-    let flow_graph = FlowGraph::from_json(json_graph, &action_registry, &condition_registry)?;
+    let flow_graph = FlowGraph::from_json(json_graph, &action_registry, &condition_registry)
+        .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) })?;
     let flow_manager = FlowManager::new(Box::new(conversation_repository), flow_graph);
     let shared_state = Arc::new(Mutex::new(AppState { flow_manager, memory_conversation_repository: MemoryConversationRepository::new() }));
 

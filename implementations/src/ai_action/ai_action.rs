@@ -140,8 +140,16 @@ mod tests {
             .variables
             .insert("messages".to_string(), Value::Messages(messages));
 
+        context
+            .variables
+            .insert("trigger_message".to_string(), Value::Messages(vec![Message::new(
+                "user".to_string(),
+                "Hello, how are you?".to_string(),
+                "ai".to_string(),
+            )]));
+
         let ai_action = AIAction::new(
-            "gpt-3.5-turbo".to_string(),
+            "gemini-2.0-flash".to_string(),
             "You are a helpful assistant".to_string(),
             json!(["messages"]),
             json!({
@@ -151,6 +159,8 @@ mod tests {
         );
 
         let result = ai_action.execute(&mut context).await;
+        println!("{:?}", result);
+
         assert!(result.is_ok());
     }
 }
