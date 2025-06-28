@@ -4,7 +4,6 @@ use mongodb::{options::ClientOptions, Client};
 use axum::{routing::post, Router};
 use core_flow::{
     flow::{
-        conversation::{Conversation, ConversationRepository},
         flow_manager::FlowManager,
     },
     graph::{
@@ -23,7 +22,7 @@ use api::{handlers, AppState};
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client_options = ClientOptions::parse("mongodb://localhost:27017").await.unwrap();
     let client = Client::with_options(client_options).unwrap();
-    let mut conversation_repository = MongoConversationRepository::new(
+    let conversation_repository = MongoConversationRepository::new(
         client.clone(),
         "path_flow_db"
     ).await?;
@@ -32,11 +31,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let condition_registry = ConditionRegistry::new();
     action_registry.register_action("ai_action", AIAction::create_ai_action);
     action_registry.register_action("send_message", SendMessage::create_send_message);
-
-    conversation_repository.save_conversation(Conversation::new(
-        "12123".to_string(),
-        "first_node".to_string(),
-    )).await.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e })?;
 
     let json_graph = r#"
         {
@@ -57,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                                 "id": "ai_action",
                                 "name": "ai_action",
                                 "model": "gemini-2.0-flash",
-                                "system_prompt": "Repond with hola"
+                                "system_prompt": "Dont answer the question, just reply mheee"
                             },
                             "input_vars": {},
                             "output_vars": ["messages"]
@@ -91,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                             "action_type": "ai_action",
                             "config": {
                                 "id": "ai_action",
-                                "name": "AI Action",
+                                "name": "ai_action",
                                 "model": "gemini-2.0-flash",
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
@@ -127,7 +121,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                             "action_type": "ai_action",
                             "config": {
                                 "id": "ai_action",
-                                "name": "AI Action",
+                                "name": "ai_action",
                                 "model": "gemini-2.0-flash",
                                 "system_prompt": "Dont answer the question, just reply mheee"
                             },
