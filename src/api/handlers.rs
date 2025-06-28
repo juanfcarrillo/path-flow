@@ -44,7 +44,7 @@ pub async fn create_conversation(
     let conversation = Conversation::new(payload.conversation_id.clone(), payload.initial_node);
 
     match state
-        .memory_conversation_repository
+        .mongo_conversation_repository
         .save_conversation(conversation.clone()).await
     {
         Ok(_) => Json(CreateConversationResponse {
@@ -65,6 +65,8 @@ pub async fn send_message(
 
     let message = Message::new(payload.sender, payload.content, payload.recipient);
 
+    println!("Trigerring conversation with message: {:?}", message);
+
     // Trigger conversation through flow manager
     execute_conversation_flow(&mut state, conversation_id, message.clone()).await
 }
@@ -83,7 +85,7 @@ pub async fn trigger_conversation(
 
     // Try to get existing conversation or create a new one
     let conversation_id = match state
-        .memory_conversation_repository
+        .mongo_conversation_repository
         .get_conversation_by_recipient(payload.sender.clone()).await
     {
         Ok(conversation) => conversation.id,
@@ -93,7 +95,7 @@ pub async fn trigger_conversation(
                 Conversation::new(payload.recipient.clone(), "first_node".to_string());
 
             match state
-                .memory_conversation_repository
+                .mongo_conversation_repository
                 .save_conversation(new_conversation.clone()).await
             {
                 Ok(_) => new_conversation.id,
